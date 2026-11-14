@@ -35,7 +35,7 @@ void main() {
   group('ApiClient transport', () {
     test('sends requests under /api/v1 with a Bearer token', () async {
       client({
-        'GET /api/v1/me': const FakeResponse(200, {'id': 'u1', 'username': 'sajra'})
+        'GET /api/v1/me': const FakeResponse(200, {'id': 'u1', 'username': 'alice'})
       });
       await api.get('/me');
       final req = http.requests.single;
@@ -77,9 +77,24 @@ void main() {
       client({});
       final urls = ApiMediaUrls(api);
       expect(urls.cover('abc'), 'http://nas.local:4040/api/v1/tracks/abc/cover?token=tok123');
-      expect(urls.stream('abc', StreamQuality.original).toString(),
+      expect(urls.stream(track('abc'), StreamQuality.original).toString(),
           'http://nas.local:4040/api/v1/tracks/abc/stream?format=original&token=tok123');
-      expect(urls.stream('abc', StreamQuality.opus128).toString(),
+      expect(urls.stream(track('abc'), StreamQuality.opus128).toString(),
+          'http://nas.local:4040/api/v1/tracks/abc/stream?format=opus&bitrate=128&token=tok123');
+    });
+
+    test('Apple Lossless streams as lossless FLAC; other originals stay untouched', () {
+      client({});
+      final urls = ApiMediaUrls(api);
+      final alac = track('abc', format: 'm4a', lossless: true);
+      expect(urls.stream(alac, StreamQuality.original).toString(),
+          'http://nas.local:4040/api/v1/tracks/abc/stream?format=flac&token=tok123');
+      // AAC in .m4a and every other format keep the original bytes.
+      for (final t in [track('abc', format: 'm4a'), track('abc', format: 'flac', lossless: true), track('abc')]) {
+        expect(urls.stream(t, StreamQuality.original).toString(),
+            'http://nas.local:4040/api/v1/tracks/abc/stream?format=original&token=tok123');
+      }
+      expect(urls.stream(alac, StreamQuality.opus128).toString(),
           'http://nas.local:4040/api/v1/tracks/abc/stream?format=opus&bitrate=128&token=tok123');
     });
   });
@@ -249,16 +264,16 @@ void main() {
       final adapter = FakeHttpAdapter({
         'POST /api/v1/auth/login': const FakeResponse(200, {
           'token': 'jwt',
-          'user': {'id': 'u1', 'username': 'sajra'}
+          'user': {'id': 'u1', 'username': 'alice'}
         })
       });
-      final s = await AuthApi(adapter: adapter).login('http://nas:4040/', 'sajra', 'pw');
+      final s = await AuthApi(adapter: adapter).login('http://nas:4040/', 'alice', 'pw');
       expect(adapter.requests.single.uri.toString(), 'http://nas:4040/api/v1/auth/login');
       expect(adapter.requests.single.headers.containsKey('Authorization'), isFalse);
-      expect(adapter.bodies.single, {'username': 'sajra', 'password': 'pw'});
+      expect(adapter.bodies.single, {'username': 'alice', 'password': 'pw'});
       expect(s.serverUrl, 'http://nas:4040');
       expect(s.token, 'jwt');
-      expect(s.user.username, 'sajra');
+      expect(s.user.username, 'alice');
     });
 
     test('401 invalid_credentials maps to InvalidCredentialsException', () async {

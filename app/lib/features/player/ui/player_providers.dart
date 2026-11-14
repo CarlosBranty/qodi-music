@@ -25,7 +25,7 @@ final playerPortProvider = Provider<PlayerPort>((ref) {
         return source.pathOf(id);
       },
       downloadPath: (id) async => ref.read(downloadStoreProvider)?.localPath(id),
-      stream: (id) => urls.stream(id, ref.read(qualityProvider)),
+      stream: (track) => urls.stream(track, ref.read(qualityProvider)),
     ),
     recorder: ref.read(playRecorderProvider),
     onPlay: (play) => ref.read(playsReporterProvider).record(play),

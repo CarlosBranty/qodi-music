@@ -83,7 +83,7 @@ class NoCoverUrls implements MediaUrls {
   @override
   String? cover(String trackId) => null;
   @override
-  Uri stream(String trackId, StreamQuality quality) => Uri.parse('http://test/$trackId');
+  Uri stream(Track track, StreamQuality quality) => Uri.parse('http://test/${track.id}');
 }
 
 class FakeFavorites implements FavoritesRepository {
@@ -130,14 +130,18 @@ Override playerOverride(PlayerPort port) => playerPortProvider.overrideWithValue
 class FakeDownloadStore implements DownloadStore {
   FakeDownloadStore([Set<String>? downloaded]) : downloaded = downloaded ?? {};
   final Set<String> downloaded;
+  /// File extension each download was saved with, by track id.
+  final Map<String, String> extensions = {};
 
   @override
   Future<Set<String>> downloadedIds() async => {...downloaded};
   @override
   Future<String?> localPath(String trackId) async => downloaded.contains(trackId) ? '/music/$trackId' : null;
   @override
-  Future<void> download(String trackId, Uri url, String extension, {void Function(double progress)? onProgress}) async =>
-      downloaded.add(trackId);
+  Future<void> download(String trackId, Uri url, String extension, {void Function(double progress)? onProgress}) async {
+    extensions[trackId] = extension;
+    downloaded.add(trackId);
+  }
   @override
   Future<void> delete(String trackId) async => downloaded.remove(trackId);
   @override

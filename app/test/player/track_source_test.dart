@@ -11,7 +11,7 @@ void main() {
         t,
         devicePath: (_) async => devicePath,
         downloadPath: (_) async => download,
-        stream: (id) => Uri.parse('http://nas/stream/$id'),
+        stream: (t) => Uri.parse('http://nas/stream/${t.id}'),
       );
 
   test('device track plays its local file', () async {

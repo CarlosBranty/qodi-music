@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/api/media_urls.dart';
 import '../../../core/config/core_providers.dart';
 import '../../../core/config/settings_store.dart';
 import '../../library/domain/entities.dart';
@@ -43,10 +44,10 @@ class DownloadsController extends Notifier<DownloadsState> {
   Future<void> download(Track track) async {
     final store = _store;
     if (store == null || state.isDownloaded(track.id) || state.isDownloading(track.id)) return;
-    final url = ref.read(mediaUrlsProvider).stream(track.id, StreamQuality.original);
+    final url = ref.read(mediaUrlsProvider).stream(track, StreamQuality.original);
     _setProgress(track.id, 0);
     try {
-      await store.download(track.id, url, track.format,
+      await store.download(track.id, url, originalExtension(track),
           onProgress: (p) => _setProgress(track.id, p));
       state = DownloadsState(
         ids: {...state.ids, track.id},

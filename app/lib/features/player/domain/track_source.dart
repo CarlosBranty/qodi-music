@@ -16,7 +16,7 @@ Future<Uri> resolveTrackSource(
   Track track, {
   required Future<String?> Function(String trackId) devicePath,
   required Future<String?> Function(String trackId) downloadPath,
-  required Uri Function(String trackId) stream,
+  required Uri Function(Track track) stream,
 }) async {
   if (isDeviceTrackId(track.id)) {
     final path = await devicePath(track.id);
@@ -25,5 +25,5 @@ Future<Uri> resolveTrackSource(
   }
   final local = await downloadPath(track.id);
   if (local != null) return Uri.file(local);
-  return stream(track.id);
+  return stream(track);
 }

@@ -9,6 +9,7 @@ import 'package:qodi_music/features/auth/ui/auth_controller.dart';
 import 'package:qodi_music/features/auth/ui/login_screen.dart';
 
 import '../support/fakes.dart';
+import '../support/l10n.dart';
 
 class FakeGateway implements AuthGateway {
   final calls = <List<String>>[];
@@ -35,7 +36,11 @@ void main() {
     addTearDown(container.dispose);
     await tester.pumpWidget(UncontrolledProviderScope(
       container: container,
-      child: MaterialApp(theme: AppTheme.light(useGoogleFonts: false), home: const LoginScreen()),
+      child: MaterialApp(
+        locale: const Locale('en'),
+        localizationsDelegates: appLocalizationsDelegates,
+        supportedLocales: appSupportedLocales,
+        theme: AppTheme.light(useGoogleFonts: false), home: const LoginScreen()),
     ));
   }
 

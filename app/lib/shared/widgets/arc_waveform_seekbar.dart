@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/theme/tokens.dart';
+import '../../l10n/l10n.dart';
 
 /// Waveform drawn as vertical bars along an upward arc. The played part is
 /// orange with a thicker orange arc line and a round thumb; the rest is light
@@ -45,7 +46,7 @@ class _ArcWaveformSeekbarState extends State<ArcWaveformSeekbar> {
       final value = (_drag ?? widget.progress).clamp(0.0, 1.0);
       return Semantics(
         slider: true,
-        label: 'Seek',
+        label: context.l10n.seek,
         value: '${(value * 100).round()}%',
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,

@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../../core/theme/tokens.dart';
+import '../../../l10n/l10n.dart';
 import '../../library/domain/entities.dart';
 import '../../player/ui/player_providers.dart';
 import '../domain/lyrics.dart';
@@ -55,7 +56,7 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
           return ListView(controller: widget.scrollController, children: [
             Padding(
               padding: const EdgeInsets.all(32),
-              child: Text('No lyrics for this song', textAlign: TextAlign.center, style: TextStyle(color: c.textMuted)),
+              child: Text(context.l10n.noLyrics, textAlign: TextAlign.center, style: TextStyle(color: c.textMuted)),
             ),
           ]);
         }
@@ -70,7 +71,7 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
             if (i == 0) {
               return Padding(
                 padding: const EdgeInsets.only(bottom: 16),
-                child: Text('Lyrics · ${widget.track.title}',
+                child: Text(context.l10n.lyricsTitle(widget.track.title),
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
               );
             }
@@ -98,7 +99,7 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
         );
       },
       loading: () => const Center(child: CircularProgressIndicator(color: QodiTokens.orange)),
-      error: (e, _) => Center(child: Text('Could not load lyrics', style: TextStyle(color: c.textMuted))),
+      error: (e, _) => Center(child: Text(context.l10n.lyricsLoadFailed, style: TextStyle(color: c.textMuted))),
     );
   }
 }

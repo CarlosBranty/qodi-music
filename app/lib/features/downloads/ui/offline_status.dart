@@ -3,16 +3,10 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../../core/config/core_providers.dart';
 import '../../../core/theme/tokens.dart';
+import '../../../l10n/l10n.dart';
 import '../../device_music/domain/device_track.dart';
 import '../../library/domain/entities.dart';
 import 'downloads_controller.dart';
-
-/// User-facing copy of the offline indicators (kept together for translation).
-abstract final class OfflineStrings {
-  static const availableOffline = 'Available offline';
-  static const downloaded = 'Downloaded';
-  static String someDownloaded(int done, int total) => '$done of $total downloaded';
-}
 
 /// A track plays without a connection when it is downloaded or stored on the
 /// device. Always false on web (no downloads, no device music).
@@ -57,10 +51,10 @@ class OfflineSummary {
   bool get complete => total > 0 && available == total;
 
   /// "Downloaded", "N of M downloaded", or null when nothing is offline.
-  String? get label => complete
-      ? OfflineStrings.downloaded
+  String? label(AppLocalizations l) => complete
+      ? l.downloaded
       : available > 0
-          ? OfflineStrings.someDownloaded(available, total)
+          ? l.someDownloaded(available, total)
           : null;
 
   static OfflineSummary of(List<Track> tracks, DownloadsState state) {
@@ -91,9 +85,9 @@ class OfflineBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Semantics(
-        label: OfflineStrings.availableOffline,
+        label: context.l10n.availableOffline,
         child: Tooltip(
-          message: OfflineStrings.availableOffline,
+          message: context.l10n.availableOffline,
           child: Container(
             width: size,
             height: size,

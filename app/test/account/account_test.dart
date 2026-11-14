@@ -9,6 +9,7 @@ import 'package:qodi_music/features/account/ui/register_screen.dart';
 import 'package:qodi_music/features/auth/data/auth_api.dart';
 
 import '../support/fake_http.dart';
+import '../support/l10n.dart';
 
 FakeResponse _err(int status, String code) => FakeResponse(status, {
       'error': {'code': code, 'message': 'server says $code'}
@@ -19,27 +20,27 @@ void main() {
     test('username: lowercased, ^[a-z0-9_.-]{3,32}\$', () {
       expect(validateUsername('Sajra.Music_1'), isNull);
       expect(normalizeUsername('  Sajra '), 'sajra');
-      expect(validateUsername(''), AccountStrings.enterUsername);
-      expect(validateUsername('ab'), AccountStrings.usernameRule);
-      expect(validateUsername('a' * 33), AccountStrings.usernameRule);
+      expect(validateUsername(''), AccountError.enterUsername);
+      expect(validateUsername('ab'), AccountError.usernameRule);
+      expect(validateUsername('a' * 33), AccountError.usernameRule);
       expect(validateUsername('a' * 32), isNull);
-      expect(validateUsername('with space'), AccountStrings.usernameRule);
-      expect(validateUsername('ñandu'), AccountStrings.usernameRule);
+      expect(validateUsername('with space'), AccountError.usernameRule);
+      expect(validateUsername('ñandu'), AccountError.usernameRule);
     });
 
     test('password: 8–128 chars; confirmation must match', () {
-      expect(validateNewPassword(''), AccountStrings.enterPassword);
-      expect(validateNewPassword('1234567'), AccountStrings.passwordRule);
+      expect(validateNewPassword(''), AccountError.enterPassword);
+      expect(validateNewPassword('1234567'), AccountError.passwordRule);
       expect(validateNewPassword('12345678'), isNull);
       expect(validateNewPassword('x' * 128), isNull);
-      expect(validateNewPassword('x' * 129), AccountStrings.passwordRule);
-      expect(validatePasswordConfirmation('abc', 'abd'), AccountStrings.passwordsDiffer);
+      expect(validateNewPassword('x' * 129), AccountError.passwordRule);
+      expect(validatePasswordConfirmation('abc', 'abd'), AccountError.passwordsDiffer);
       expect(validatePasswordConfirmation('abc', 'abc'), isNull);
     });
 
     test('invite code is normalized (spaces, lower case)', () {
       expect(normalizeInviteCode(' k7q2 mx9r ta4p '), 'K7Q2MX9RTA4P');
-      expect(validateInviteCode('  '), AccountStrings.enterInvite);
+      expect(validateInviteCode('  '), AccountError.enterInvite);
     });
   });
 
@@ -101,7 +102,7 @@ void main() {
       final a = api({'PUT /api/v1/me/password': _err(401, 'invalid_credentials')});
       await expectLater(a.changePassword('bad', 'new-secret'), throwsA(isA<InvalidCredentialsException>()));
       expect(unauthorized, 0, reason: 'a wrong current password must not log out');
-      expect(changePasswordErrorMessage(const InvalidCredentialsException()), AccountStrings.wrongCurrentPassword);
+      expect(changePasswordErrorMessage(en, const InvalidCredentialsException()), en.wrongCurrentPassword);
     });
 
     test('403 forbidden maps to ForbiddenException with a friendly message', () async {
@@ -113,7 +114,7 @@ void main() {
         error = e;
       }
       expect(error, isA<ForbiddenException>());
-      expect(friendlyApiError(error!), ApiErrorStrings.forbidden);
+      expect(friendlyApiError(en, error!), en.errorForbidden);
       expect(unauthorized, 0);
     });
 
@@ -171,10 +172,10 @@ void main() {
     });
 
     test('register error mapping', () {
-      expect(registerErrorMessage(const ApiException('invalid_invite', 'x', statusCode: 400)), AccountStrings.invalidInvite);
-      expect(registerErrorMessage(const ApiException('username_taken', 'x', statusCode: 409)), AccountStrings.usernameTaken);
-      expect(registerErrorMessage(const ApiException('bad_request', 'x', statusCode: 400)), AccountStrings.badRequest);
-      expect(registerErrorMessage(const ApiException('network', 'x')), ApiErrorStrings.network);
+      expect(registerErrorMessage(en, const ApiException('invalid_invite', 'x', statusCode: 400)), en.invalidInvite);
+      expect(registerErrorMessage(en, const ApiException('username_taken', 'x', statusCode: 409)), en.usernameTaken);
+      expect(registerErrorMessage(en, const ApiException('bad_request', 'x', statusCode: 400)), en.badRequest);
+      expect(registerErrorMessage(en, const ApiException('network', 'x')), en.errorNetwork);
     });
   });
 }

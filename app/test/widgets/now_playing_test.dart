@@ -6,6 +6,7 @@ import 'package:qodi_music/features/player/ui/now_playing_screen.dart';
 
 import '../support/fakes.dart';
 import '../support/fixtures.dart';
+import '../support/l10n.dart';
 
 void main() {
   testWidgets('renders title/artist and the play button toggles playback', (tester) async {
@@ -22,7 +23,11 @@ void main() {
     await tester.pumpWidget(ProviderScope(
       overrides: [...overrides, playerOverride(player)],
       retry: (_, _) => null,
-      child: MaterialApp(theme: AppTheme.light(useGoogleFonts: false), home: const NowPlayingScreen()),
+      child: MaterialApp(
+        locale: const Locale('en'),
+        localizationsDelegates: appLocalizationsDelegates,
+        supportedLocales: appSupportedLocales,
+        theme: AppTheme.light(useGoogleFonts: false), home: const NowPlayingScreen()),
     ));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));

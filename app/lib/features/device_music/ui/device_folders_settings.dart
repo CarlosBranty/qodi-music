@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../../core/theme/tokens.dart';
+import '../../../l10n/l10n.dart';
 import '../../../shared/widgets/bento_card.dart';
 import '../../library/ui/track_actions.dart';
 import 'device_music_providers.dart';
@@ -15,6 +16,7 @@ class DeviceFoldersSettings extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final c = QodiColors.of(context);
+    final l = context.l10n;
     final platform = ref.watch(deviceMusicProvider)?.platform;
     final defaults = ref.watch(deviceDefaultFoldersProvider).value ?? const [];
     final folders = ref.watch(deviceFoldersProvider);
@@ -25,12 +27,12 @@ class DeviceFoldersSettings extends ConsumerWidget {
           leading: Icon(Icons.folder_rounded, color: unreadable.contains(path) ? c.textMuted : QodiTokens.orange),
           title: Text(path, maxLines: 2, overflow: TextOverflow.ellipsis),
           subtitle: Text(
-            [onRemove == null ? 'Default' : 'Added by you', if (unreadable.contains(path)) 'not found'].join(' • '),
+            [onRemove == null ? l.folderDefault : l.folderAddedByYou, if (unreadable.contains(path)) l.folderNotFound].join(' • '),
             style: TextStyle(color: c.textMuted, fontSize: 12),
           ),
           trailing: onRemove == null
               ? null
-              : IconButton(tooltip: 'Remove folder', icon: const Icon(Icons.close_rounded), onPressed: onRemove),
+              : IconButton(tooltip: l.removeFolder, icon: const Icon(Icons.close_rounded), onPressed: onRemove),
         );
     return BentoCard(
       padding: EdgeInsets.zero,
@@ -46,14 +48,14 @@ class DeviceFoldersSettings extends ConsumerWidget {
             ListTile(
               key: const Key('device-add-folder'),
               leading: const Icon(Icons.create_new_folder_rounded),
-              title: const Text('Add folder'),
+              title: Text(l.addFolder),
               onTap: () => addDeviceFolder(context, ref),
             ),
           if (platform?.importsFiles ?? false)
             ListTile(
               leading: const Icon(Icons.file_upload_rounded),
-              title: const Text('Import songs'),
-              subtitle: const Text('Copies audio files into the app'),
+              title: Text(l.importSongs),
+              subtitle: Text(l.importSongsHintSettings),
               onTap: () => importDeviceFiles(context, ref),
             ),
           ListTile(
@@ -62,14 +64,14 @@ class DeviceFoldersSettings extends ConsumerWidget {
                 ? const SizedBox.square(
                     dimension: 22, child: CircularProgressIndicator(strokeWidth: 2, color: QodiTokens.orange))
                 : const Icon(Icons.radar_rounded),
-            title: const Text('Rescan device music'),
-            subtitle: Text(library == null ? '' : '${library.tracks.length} songs found'),
+            title: Text(l.rescanDeviceMusic),
+            subtitle: Text(library == null ? '' : l.songsFound(library.tracks.length)),
             onTap: scanning
                 ? null
                 : () async {
                     final report = await ref.read(deviceLibraryProvider.notifier).rescan();
                     if (context.mounted && report != null) {
-                      showSnack(context, 'Scan done: ${report.added} new, ${report.removed} removed');
+                      showSnack(context, l.scanDone(report.added, report.removed));
                     }
                   },
           ),

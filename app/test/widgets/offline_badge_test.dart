@@ -11,6 +11,7 @@ import 'package:qodi_music/features/player/ui/mini_player.dart';
 
 import '../support/fakes.dart';
 import '../support/fixtures.dart';
+import '../support/l10n.dart';
 
 void main() {
   final downloadedServer = track('srv-done', title: 'Downloaded song');
@@ -31,6 +32,9 @@ void main() {
     await tester.pumpWidget(UncontrolledProviderScope(
       container: c,
       child: MaterialApp(
+        locale: const Locale('en'),
+        localizationsDelegates: appLocalizationsDelegates,
+        supportedLocales: appSupportedLocales,
         theme: AppTheme.light(useGoogleFonts: false),
         home: Scaffold(body: child),
       ),
@@ -115,6 +119,6 @@ void main() {
     expect(s.available, 2);
     expect(s.downloading, 1);
     expect(s.progress, closeTo(2.5 / 4, 1e-9));
-    expect(s.label, '2 of 4 downloaded');
+    expect(s.label(en), '2 of 4 downloaded');
   });
 }

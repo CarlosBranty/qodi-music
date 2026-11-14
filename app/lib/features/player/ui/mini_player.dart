@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../../core/theme/tokens.dart';
+import '../../../l10n/l10n.dart';
 import '../../../shared/widgets/vinyl_cover.dart';
 import '../../downloads/ui/offline_status.dart';
 import 'player_providers.dart';
@@ -64,13 +65,13 @@ class MiniPlayer extends ConsumerWidget {
                       ),
                     ),
                     IconButton(
-                      tooltip: snap.playing ? 'Pause' : 'Play',
+                      tooltip: snap.playing ? context.l10n.pause : context.l10n.play,
                       onPressed: port.togglePlay,
                       icon: Icon(snap.playing ? Icons.pause_circle_filled_rounded : Icons.play_circle_fill_rounded,
                           color: QodiTokens.orange, size: 38),
                     ),
                     IconButton(
-                      tooltip: 'Next',
+                      tooltip: context.l10n.next,
                       onPressed: port.next,
                       icon: Icon(Icons.skip_next_rounded, color: c.text),
                     ),

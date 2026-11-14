@@ -6,7 +6,6 @@ import 'package:qodi_music/core/api/api_error.dart';
 import 'package:qodi_music/core/config/core_providers.dart';
 import 'package:qodi_music/core/router/app_router.dart';
 import 'package:qodi_music/core/theme/app_theme.dart';
-import 'package:qodi_music/features/account/domain/account.dart';
 import 'package:qodi_music/features/account/ui/account_providers.dart';
 import 'package:qodi_music/features/account/ui/users_screen.dart';
 import 'package:qodi_music/features/auth/domain/auth_state.dart';
@@ -16,6 +15,7 @@ import 'package:qodi_music/features/settings/ui/settings_screen.dart';
 import '../support/fake_http.dart';
 import '../support/fakes.dart';
 import '../support/fixtures.dart';
+import '../support/l10n.dart';
 
 class FakeRegister implements RegisterGateway {
   final calls = <List<String>>[];
@@ -67,11 +67,19 @@ void main() {
     final theme = AppTheme.light(useGoogleFonts: false);
     if (home != null) {
       await tester.pumpWidget(UncontrolledProviderScope(
-          container: container, child: MaterialApp(theme: theme, home: home)));
+          container: container, child: MaterialApp(
+        locale: const Locale('en'),
+        localizationsDelegates: appLocalizationsDelegates,
+        supportedLocales: appSupportedLocales,
+        theme: theme, home: home)));
     } else {
       final router = container.read(appRouterProvider);
       await tester.pumpWidget(UncontrolledProviderScope(
-          container: container, child: MaterialApp.router(theme: theme, routerConfig: router)));
+          container: container, child: MaterialApp.router(
+        locale: const Locale('en'),
+        localizationsDelegates: appLocalizationsDelegates,
+        supportedLocales: appSupportedLocales,
+        theme: theme, routerConfig: router)));
       if (location != null) router.go(location);
     }
     await settle(tester);
@@ -111,9 +119,9 @@ void main() {
       await tester.enterText(find.byKey(const Key('register-password')), 'short');
       await tester.enterText(find.byKey(const Key('register-confirm')), 'other');
       await tapKey(tester, 'register-submit');
-      expect(find.text(AccountStrings.usernameRule), findsOneWidget);
-      expect(find.text(AccountStrings.passwordRule), findsOneWidget);
-      expect(find.text(AccountStrings.passwordsDiffer), findsOneWidget);
+      expect(find.text(en.usernameRule), findsOneWidget);
+      expect(find.text(en.passwordRule), findsOneWidget);
+      expect(find.text(en.passwordsDiffer), findsOneWidget);
       expect(register.calls, isEmpty);
       await tester.pumpWidget(const SizedBox());
     });
@@ -128,9 +136,9 @@ void main() {
     }
 
     for (final (code, message) in [
-      ('invalid_invite', AccountStrings.invalidInvite),
-      ('username_taken', AccountStrings.usernameTaken),
-      ('bad_request', AccountStrings.badRequest),
+      ('invalid_invite', en.invalidInvite),
+      ('username_taken', en.usernameTaken),
+      ('bad_request', en.badRequest),
     ]) {
       testWidgets('server error $code is explained', (tester) async {
         await pump(tester, location: '/register');
@@ -202,7 +210,7 @@ void main() {
       await changePassword(tester, 'old-secret');
       expect(http.bodies.single, {'current_password': 'old-secret', 'new_password': 'new-secret'});
       expect(find.byKey(const Key('pw-save')), findsNothing);
-      expect(find.text(AccountStrings.passwordChanged), findsOneWidget);
+      expect(find.text(en.passwordChanged), findsOneWidget);
       await tester.pumpWidget(const SizedBox());
     });
 
@@ -213,7 +221,7 @@ void main() {
         })
       });
       await changePassword(tester, 'bad-secret');
-      expect(find.text(AccountStrings.wrongCurrentPassword), findsOneWidget);
+      expect(find.text(en.wrongCurrentPassword), findsOneWidget);
       expect(container.read(authControllerProvider), isNotNull);
       await tester.pumpWidget(const SizedBox());
     });
@@ -281,7 +289,7 @@ void main() {
           'error': {'code': 'forbidden', 'message': 'nope'}
         }),
       });
-      expect(find.text(ApiErrorStrings.forbidden), findsOneWidget);
+      expect(find.text(en.errorForbidden), findsOneWidget);
       await tester.pumpWidget(const SizedBox());
     });
 

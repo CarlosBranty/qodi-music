@@ -85,13 +85,13 @@ class FakeDevicePlatform implements DeviceMusicPlatform {
   @override
   Future<List<String>> defaultFolders() async => const ['/music'];
   @override
-  Future<int> importFiles() async => 0;
+  Future<int> importFiles({String? dialogTitle}) async => 0;
   @override
   Future<void> openPermissionSettings() async => settingsOpened++;
   @override
   Future<DevicePermission> permissionStatus() async => status;
   @override
-  Future<String?> pickFolder() async => null;
+  Future<String?> pickFolder({String? dialogTitle}) async => null;
   @override
   Future<DevicePermission> requestPermission() async {
     requests++;

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../../core/theme/tokens.dart';
+import '../../../l10n/l10n.dart';
 import '../../../shared/format.dart';
 import '../../../shared/widgets/track_tile.dart';
 import '../../downloads/ui/offline_status.dart';
@@ -32,30 +33,32 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
     try {
       await _controller.setTracks(widget.playlistId, tracks);
     } catch (_) {
-      if (mounted) showSnack(context, 'Could not save the playlist');
+      if (mounted) showSnack(context, context.l10n.playlistSaveFailed);
     }
     if (mounted) setState(() => _pending = null);
   }
 
   Future<void> _rename(String current) async {
-    final name = await askPlaylistName(context, title: 'Rename playlist', initial: current, action: 'Save');
+    final name = await askPlaylistName(context,
+        title: context.l10n.renamePlaylist, initial: current, action: context.l10n.save);
     if (name == null) return;
     try {
       await _controller.rename(widget.playlistId, name);
     } catch (_) {
-      if (mounted) showSnack(context, 'Could not rename');
+      if (mounted) showSnack(context, context.l10n.renameFailed);
     }
   }
 
   Future<void> _delete(String name) async {
+    final l = context.l10n;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete playlist?'),
-        content: Text('"$name" will be deleted. Songs stay in your library.'),
+        title: Text(l.deletePlaylistQuestion),
+        content: Text(l.deletePlaylistBody(name)),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Delete')),
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l.cancel)),
+          FilledButton(onPressed: () => Navigator.of(ctx).pop(true), child: Text(l.delete)),
         ],
       ),
     );
@@ -64,25 +67,26 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
       await _controller.delete(widget.playlistId);
       if (mounted) context.go('/library');
     } catch (_) {
-      if (mounted) showSnack(context, 'Could not delete');
+      if (mounted) showSnack(context, l.deleteFailed);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final detail = ref.watch(playlistDetailProvider(widget.playlistId));
-    final name = detail.value?.playlist.name ?? 'Playlist';
+    final l = context.l10n;
+    final name = detail.value?.playlist.name ?? l.playlist;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Playlist'),
+        title: Text(l.playlist),
         actions: [
           PopupMenuButton<String>(
-            tooltip: 'Playlist options',
+            tooltip: l.playlistOptions,
             icon: const Icon(Icons.more_horiz_rounded),
             onSelected: (v) => v == 'rename' ? _rename(name) : _delete(name),
-            itemBuilder: (_) => const [
-              PopupMenuItem(value: 'rename', child: Text('Rename')),
-              PopupMenuItem(value: 'delete', child: Text('Delete')),
+            itemBuilder: (_) => [
+              PopupMenuItem(value: 'rename', child: Text(l.rename)),
+              PopupMenuItem(value: 'delete', child: Text(l.delete)),
             ],
           ),
         ],
@@ -97,18 +101,17 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                 child: CollectionHeader(
                   seed: p.id,
                   title: p.name,
-                  subtitle: '${songsLabel(tracks.length)} • ${formatDuration(Duration(milliseconds: p.durationMs))}',
+                  subtitle: '${l.songCount(tracks.length)} • ${formatDuration(Duration(milliseconds: p.durationMs))}',
                   tracks: tracks,
                   coverTrackId: p.coverTrackId,
                   icon: Icons.queue_music_rounded,
                 ),
               ),
               if (tracks.isEmpty)
-                const SliverToBoxAdapter(
+                SliverToBoxAdapter(
                   child: Padding(
-                    padding: EdgeInsets.all(24),
-                    child: Text('Empty playlist. Long-press any song and choose "Add to playlist".',
-                        textAlign: TextAlign.center),
+                    padding: const EdgeInsets.all(24),
+                    child: Text(l.emptyPlaylistHint, textAlign: TextAlign.center),
                   ),
                 ),
               SliverReorderableList(
@@ -132,7 +135,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                         children: [
                           OfflineTrackBadge(t.id),
                           IconButton(
-                            tooltip: 'Remove from playlist',
+                            tooltip: l.removeFromPlaylist,
                             icon: Icon(Icons.remove_circle_outline_rounded, color: QodiColors.of(context).textMuted),
                             onPressed: () => _save(List.of(tracks)..removeAt(i)),
                           ),
@@ -154,7 +157,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
           );
         },
         loading: () => const Center(child: CircularProgressIndicator(color: QodiTokens.orange)),
-        error: (e, _) => Center(child: Text('Could not load playlist\n$e', textAlign: TextAlign.center)),
+        error: (e, _) => Center(child: Text(l.playlistLoadFailed('$e'), textAlign: TextAlign.center)),
       ),
     );
   }

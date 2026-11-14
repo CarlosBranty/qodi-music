@@ -8,22 +8,22 @@ import '../../../core/config/core_providers.dart';
 import '../../../core/theme/tokens.dart';
 import '../../../shared/widgets/vinyl_cover.dart';
 import '../../../shared/widgets/wordmark.dart';
-import '../../account/domain/account.dart';
+import '../../../l10n/l10n.dart';
 import '../../device_music/ui/device_music_providers.dart';
 import 'auth_controller.dart';
 
-String? validateServerUrl(String? v) {
+String? validateServerUrl(AppLocalizations l, String? v) {
   final value = v?.trim() ?? '';
-  if (value.isEmpty) return 'Enter the server URL';
+  if (value.isEmpty) return l.enterServerUrl;
   final uri = Uri.tryParse(value);
   if (uri == null || !(uri.scheme == 'http' || uri.scheme == 'https') || uri.host.isEmpty) {
-    return 'Use a full URL like http://192.168.1.10:4040';
+    return l.serverUrlRule;
   }
   return null;
 }
 
-String? validateRequired(String? v, String field) =>
-    (v == null || v.trim().isEmpty) ? 'Enter your $field' : null;
+/// [message] when [v] is blank.
+String? validateRequired(String? v, String message) => (v == null || v.trim().isEmpty) ? message : null;
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -57,6 +57,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _submit() async {
+    final l = context.l10n;
     if (!(_form.currentState?.validate() ?? false)) return;
     setState(() {
       _busy = true;
@@ -65,11 +66,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     try {
       await ref.read(authControllerProvider.notifier).login(_server.text.trim(), _user.text.trim(), _pass.text);
     } on InvalidCredentialsException {
-      _error = 'Wrong username or password';
+      _error = l.wrongCredentials;
     } on ApiException catch (e) {
-      _error = e.isNetwork ? 'Cannot reach the server. Check the URL.' : e.message;
+      _error = e.isNetwork ? l.errorNetwork : e.message;
     } catch (e) {
-      _error = 'Login failed: $e';
+      _error = l.loginFailed('$e');
     }
     if (mounted) setState(() => _busy = false);
   }
@@ -85,6 +86,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final c = QodiColors.of(context);
     final deviceMusic = ref.watch(deviceMusicSupportedProvider);
     final text = Theme.of(context).textTheme;
+    final l = context.l10n;
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -101,7 +103,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     const SizedBox(height: 24),
                     const Center(child: QodiWordmark(height: 40)),
                     const SizedBox(height: 10),
-                    Text('Sign in to your music server',
+                    Text(l.signInSubtitle,
                         textAlign: TextAlign.center,
                         style: text.bodyMedium?.copyWith(color: c.textMuted)),
                     const SizedBox(height: 28),
@@ -110,22 +112,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       controller: _server,
                       keyboardType: TextInputType.url,
                       autocorrect: false,
-                      decoration: const InputDecoration(
-                        hintText: 'Server URL',
-                        prefixIcon: Icon(Icons.dns_rounded),
+                      decoration: InputDecoration(
+                        hintText: l.serverUrl,
+                        prefixIcon: const Icon(Icons.dns_rounded),
                       ),
-                      validator: validateServerUrl,
+                      validator: (v) => validateServerUrl(l, v),
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
                       key: const Key('login-username'),
                       controller: _user,
                       autocorrect: false,
-                      decoration: const InputDecoration(
-                        hintText: 'Username',
-                        prefixIcon: Icon(Icons.person_rounded),
+                      decoration: InputDecoration(
+                        hintText: l.username,
+                        prefixIcon: const Icon(Icons.person_rounded),
                       ),
-                      validator: (v) => validateRequired(v, 'username'),
+                      validator: (v) => validateRequired(v, l.enterYourUsername),
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
@@ -133,15 +135,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       controller: _pass,
                       obscureText: _obscure,
                       decoration: InputDecoration(
-                        hintText: 'Password',
+                        hintText: l.password,
                         prefixIcon: const Icon(Icons.lock_rounded),
                         suffixIcon: IconButton(
-                          tooltip: _obscure ? 'Show password' : 'Hide password',
+                          tooltip: _obscure ? l.showPassword : l.hidePassword,
                           onPressed: () => setState(() => _obscure = !_obscure),
                           icon: Icon(_obscure ? Icons.visibility_rounded : Icons.visibility_off_rounded),
                         ),
                       ),
-                      validator: (v) => validateRequired(v, 'password'),
+                      validator: (v) => validateRequired(v, l.enterYourPassword),
                       onFieldSubmitted: (_) => _submit(),
                     ),
                     if (_error != null) ...[
@@ -159,13 +161,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ? const SizedBox.square(
                               dimension: 22,
                               child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
-                          : const Text('Sign in'),
+                          : Text(l.signIn),
                     ),
                     const SizedBox(height: 4),
                     TextButton(
                       key: const Key('login-register'),
                       onPressed: _busy ? null : () => context.push('/register'),
-                      child: const Text(AccountStrings.haveInvite),
+                      child: Text(l.haveInvite),
                     ),
                     if (deviceMusic) ...[
                       const SizedBox(height: 12),
@@ -178,10 +180,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           minimumSize: const Size.fromHeight(52),
                         ),
                         icon: const Icon(Icons.phone_android_rounded),
-                        label: const Text('Use without server'),
+                        label: Text(l.useWithoutServer),
                       ),
                       const SizedBox(height: 6),
-                      Text('Play the music stored on this device. You can connect a server later in Settings.',
+                      Text(l.useWithoutServerHint,
                           textAlign: TextAlign.center, style: text.bodySmall?.copyWith(color: c.textMuted)),
                     ],
                   ],

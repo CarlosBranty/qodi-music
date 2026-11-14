@@ -27,3 +27,17 @@ class QualityController extends Notifier<StreamQuality> {
     await ref.read(settingsStoreProvider).setQuality(v);
   }
 }
+
+final languagePreferenceProvider =
+    NotifierProvider<LanguagePreferenceController, AppLanguage>(LanguagePreferenceController.new);
+
+/// Settings › Language; applied immediately through `MaterialApp.locale`.
+class LanguagePreferenceController extends Notifier<AppLanguage> {
+  @override
+  AppLanguage build() => ref.read(settingsStoreProvider).language;
+
+  Future<void> set(AppLanguage v) async {
+    state = v;
+    await ref.read(settingsStoreProvider).setLanguage(v);
+  }
+}

@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../../core/theme/tokens.dart';
-import '../../../shared/format.dart';
+import '../../../l10n/l10n.dart';
 import '../../../shared/widgets/cover_art.dart';
 import '../../../shared/widgets/section_header.dart';
 import '../../../shared/widgets/vinyl_cover.dart';
@@ -30,7 +30,8 @@ class HomeScreen extends ConsumerWidget {
     final session = ref.watch(authControllerProvider);
     final server = session != null;
     final deviceSupported = ref.watch(deviceMusicSupportedProvider);
-    final name = session?.user.username ?? 'Listener';
+    final l = context.l10n;
+    final name = session?.user.username ?? l.listener;
     final history = ref.watch(historyProvider);
     final c = QodiColors.of(context);
     final text = Theme.of(context).textTheme;
@@ -75,7 +76,7 @@ class HomeScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(server ? 'Welcome back,' : 'Offline mode,',
+                      Text(server ? l.welcomeBack : l.offlineModeGreeting,
                           style: text.bodyMedium?.copyWith(color: c.textMuted)),
                       Text(name,
                           maxLines: 1,
@@ -86,7 +87,7 @@ class HomeScreen extends ConsumerWidget {
                 ),
                 const QodiWordmark(height: 22),
                 IconButton(
-                  tooltip: 'Settings',
+                  tooltip: l.settings,
                   onPressed: () => context.push('/settings'),
                   icon: const Icon(Icons.settings_rounded),
                 ),
@@ -95,13 +96,13 @@ class HomeScreen extends ConsumerWidget {
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-            child: Text('What do you want\nto listen today?',
+            child: Text(l.listenPrompt,
                 style: text.headlineSmall?.copyWith(fontWeight: FontWeight.w800, height: 1.15)),
           ),
           if (deviceSupported) const DeviceShortcutCard(),
           if (server) const _ServerPlaylists() else if (deviceSupported) const _DevicePlaylists(),
           if (recent.isNotEmpty) ...[
-            const SectionHeader('Recently played'),
+            SectionHeader(l.recentlyPlayed),
             SizedBox(
               height: 250,
               child: ListView.separated(
@@ -129,15 +130,16 @@ class _ServerPlaylists extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final playlists = ref.watch(playlistsControllerProvider);
+    final l = context.l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SectionHeader('Playlist', actionLabel: 'View all', onAction: () => context.go('/library')),
+        SectionHeader(l.homePlaylistsHeader, actionLabel: l.viewAll, onAction: () => context.go('/library')),
         SizedBox(
           height: 210,
           child: playlists.when(
             data: (list) => list.isEmpty
-                ? _EmptyHint('No playlists yet. Create one in Library.', onTap: () => context.go('/library'))
+                ? _EmptyHint(l.noPlaylistsYetHome, onTap: () => context.go('/library'))
                 : ListView.separated(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -146,7 +148,7 @@ class _ServerPlaylists extends ConsumerWidget {
                     itemBuilder: (_, i) => _PlaylistCard(list[i]),
                   ),
             loading: () => const Center(child: CircularProgressIndicator(color: QodiTokens.orange)),
-            error: (e, _) => _EmptyHint('Could not load playlists'),
+            error: (e, _) => _EmptyHint(l.playlistsLoadFailed),
           ),
         ),
       ],
@@ -161,12 +163,13 @@ class _DevicePlaylists extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final list = ref.watch(devicePlaylistsProvider).value ?? const [];
     final byId = ref.watch(deviceTrackByIdProvider);
+    final l = context.l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SectionHeader('Playlist', actionLabel: 'View all', onAction: () => context.go('/library?tab=device')),
+        SectionHeader(l.homePlaylistsHeader, actionLabel: l.viewAll, onAction: () => context.go('/library?tab=device')),
         if (list.isEmpty)
-          _EmptyHint('No device playlists yet. Create one in Library.', onTap: () => context.go('/library?tab=device'))
+          _EmptyHint(l.noDevicePlaylistsYetHome, onTap: () => context.go('/library?tab=device'))
         else
           SizedBox(
             height: 210,
@@ -203,13 +206,14 @@ class _ServerFavorites extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final favorites = ref.watch(favoritesControllerProvider);
+    final l = context.l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SectionHeader('Favorites', actionLabel: 'View all', onAction: () => context.go('/library?tab=favorites')),
+        SectionHeader(l.favorites, actionLabel: l.viewAll, onAction: () => context.go('/library?tab=favorites')),
         favorites.when(
           data: (list) => list.isEmpty
-              ? _EmptyHint('Tap the heart on any song to keep it here.')
+              ? _EmptyHint(l.favoritesEmptyHint)
               : Column(
                   children: [
                     for (var i = 0; i < list.length && i < 6; i++)
@@ -220,7 +224,7 @@ class _ServerFavorites extends ConsumerWidget {
             padding: EdgeInsets.all(24),
             child: Center(child: CircularProgressIndicator(color: QodiTokens.orange)),
           ),
-          error: (e, _) => _EmptyHint('Could not load favorites'),
+          error: (e, _) => _EmptyHint(l.favoritesLoadFailed),
         ),
       ],
     );
@@ -233,12 +237,13 @@ class _DeviceFavorites extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final list = ref.watch(deviceFavoriteTracksProvider);
+    final l = context.l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SectionHeader('Favorites', actionLabel: 'View all', onAction: () => context.go('/library?tab=device')),
+        SectionHeader(l.favorites, actionLabel: l.viewAll, onAction: () => context.go('/library?tab=device')),
         if (list.isEmpty)
-          _EmptyHint('Tap the heart on any song to keep it here.')
+          _EmptyHint(l.favoritesEmptyHint)
         else
           for (var i = 0; i < list.length && i < 6; i++) ConnectedTrackTile(track: list[i], queue: list, index: i),
       ],
@@ -254,13 +259,14 @@ class DeviceShortcutCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(deviceLibraryProvider).value;
     final count = state?.tracks.length ?? 0;
+    final l = context.l10n;
     final subtitle = state == null
-        ? 'Loading…'
+        ? l.loading
         : state.scanning
-            ? 'Scanning your music…'
+            ? l.scanningYourMusic
             : !state.permission.allowed && count == 0
-                ? 'Allow access to play your music files'
-                : songsLabel(count);
+                ? l.allowAccessShort
+                : l.songCount(count);
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
       child: Material(
@@ -280,8 +286,8 @@ class DeviceShortcutCard extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('On this device',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 17)),
+                      Text(l.onThisDevice,
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 17)),
                       const SizedBox(height: 2),
                       Text(subtitle, style: TextStyle(color: Colors.white.withValues(alpha: 0.7))),
                     ],
@@ -344,7 +350,7 @@ class _PlaylistCard extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(fontWeight: FontWeight.w700)),
-            Text(songsLabel(playlist.trackCount), style: TextStyle(color: c.textMuted, fontSize: 12)),
+            Text(context.l10n.songCount(playlist.trackCount), style: TextStyle(color: c.textMuted, fontSize: 12)),
           ],
         ),
       ),
@@ -391,7 +397,7 @@ class VinylCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: text.titleSmall?.copyWith(fontWeight: FontWeight.w800, height: 1.15)),
                     const Spacer(),
-                    Text('${minutes < 1 ? 1 : minutes} min • ${track.artist}',
+                    Text('${context.l10n.minutesShort(minutes < 1 ? 1 : minutes)} • ${track.artist}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(color: c.textMuted, fontSize: 12)),

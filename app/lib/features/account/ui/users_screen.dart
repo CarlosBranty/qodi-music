@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart' show DateFormat;
 import 'package:material_ui/material_ui.dart';
 
 import '../../../core/api/api_error.dart';
@@ -8,15 +9,14 @@ import '../../../core/theme/tokens.dart';
 import '../../../shared/widgets/bento_card.dart';
 import '../../auth/ui/auth_controller.dart';
 import '../../library/ui/track_actions.dart' show showSnack;
+import '../../../l10n/l10n.dart';
 import '../domain/account.dart';
+import 'account_messages.dart';
 import 'account_providers.dart';
 
-String _date(DateTime? d) {
-  if (d == null) return '—';
-  final l = d.toLocal();
-  String two(int n) => n.toString().padLeft(2, '0');
-  return '${l.year}-${two(l.month)}-${two(l.day)} ${two(l.hour)}:${two(l.minute)}';
-}
+/// Local date and time in the active locale, e.g. `Nov 14, 2026 18:05`.
+String _date(AppLocalizations l, DateTime? d) =>
+    d == null ? '—' : DateFormat.yMMMd(l.localeName).add_Hm().format(d.toLocal());
 
 Future<bool> _confirm(BuildContext context, String title, String message, String action) async =>
     await showDialog<bool>(
@@ -25,7 +25,7 @@ Future<bool> _confirm(BuildContext context, String title, String message, String
         title: Text(title),
         content: Text(message),
         actions: [
-          TextButton(onPressed: () => Navigator.of(d).pop(false), child: const Text(AccountStrings.cancel)),
+          TextButton(onPressed: () => Navigator.of(d).pop(false), child: Text(context.l10n.cancel)),
           FilledButton(
               key: const Key('confirm-action'),
               onPressed: () => Navigator.of(d).pop(true),
@@ -41,21 +41,22 @@ class UsersScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = context.l10n;
     if (!ref.watch(isAdminProvider)) {
       return Scaffold(
-        appBar: AppBar(title: const Text(AccountStrings.usersAndInvites)),
-        body: const Center(child: Text(ApiErrorStrings.forbidden, key: Key('users-forbidden'))),
+        appBar: AppBar(title: Text(l.usersAndInvites)),
+        body: Center(child: Text(l.errorForbidden, key: const Key('users-forbidden'))),
       );
     }
     return Scaffold(
-      appBar: AppBar(title: const Text(AccountStrings.usersAndInvites)),
+      appBar: AppBar(title: Text(l.usersAndInvites)),
       floatingActionButton: FloatingActionButton.extended(
         key: const Key('invite-create'),
         backgroundColor: QodiTokens.orange,
         foregroundColor: Colors.white,
         onPressed: () => _createInvite(context, ref),
         icon: const Icon(Icons.add_rounded),
-        label: const Text(AccountStrings.createInvite),
+        label: Text(l.createInvite),
       ),
       body: RefreshIndicator(
         color: QodiTokens.orange,
@@ -82,7 +83,7 @@ class UsersScreen extends ConsumerWidget {
       final server = ref.read(apiClientProvider).serverOrigin;
       await showDialog<void>(context: context, builder: (_) => InviteShareDialog(invite: invite, serverBaseUrl: server));
     } catch (e) {
-      if (context.mounted) showSnack(context, friendlyApiError(e));
+      if (context.mounted) showSnack(context, friendlyApiError(context.l10n, e));
     }
   }
 }
@@ -92,9 +93,9 @@ Widget _sectionLabel(BuildContext context, String t) => Padding(
       child: Text(t, style: TextStyle(color: QodiColors.of(context).textMuted, fontWeight: FontWeight.w700)),
     );
 
-Widget _asyncError(Object e) => Padding(
+Widget _asyncError(BuildContext context, Object e) => Padding(
       padding: const EdgeInsets.all(16),
-      child: Text(e is ForbiddenException ? ApiErrorStrings.forbidden : AccountStrings.loadFailed),
+      child: Text(e is ForbiddenException ? context.l10n.errorForbidden : context.l10n.loadFailed),
     );
 
 class _UsersSection extends ConsumerWidget {
@@ -104,15 +105,16 @@ class _UsersSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final users = ref.watch(adminUsersProvider);
     final me = ref.watch(authControllerProvider)?.user.id;
+    final l = context.l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _sectionLabel(context, AccountStrings.users),
+        _sectionLabel(context, l.users),
         BentoCard(
           padding: EdgeInsets.zero,
           child: users.when(
             loading: () => const Padding(padding: EdgeInsets.all(16), child: LinearProgressIndicator()),
-            error: (e, _) => _asyncError(e),
+            error: (e, _) => _asyncError(context, e),
             data: (list) => Column(
               children: [
                 for (final u in list)
@@ -122,13 +124,13 @@ class _UsersSection extends ConsumerWidget {
                         color: QodiTokens.orange),
                     title: Text(u.username, style: const TextStyle(fontWeight: FontWeight.w700)),
                     subtitle: Text([
-                      if (u.id == me) AccountStrings.you,
-                      if (u.isAdmin) AccountStrings.admin,
-                      _date(u.createdAt),
+                      if (u.id == me) l.you,
+                      if (u.isAdmin) l.admin,
+                      _date(l, u.createdAt),
                     ].join(' · ')),
                     trailing: IconButton(
                       key: Key('user-delete-${u.id}'),
-                      tooltip: u.id == me ? AccountStrings.cannotDeleteSelf : AccountStrings.deleteUser,
+                      tooltip: u.id == me ? l.cannotDeleteSelf : l.deleteUser,
                       icon: const Icon(Icons.delete_outline_rounded),
                       onPressed: u.id == me ? null : () => _delete(context, ref, u),
                     ),
@@ -142,15 +144,15 @@ class _UsersSection extends ConsumerWidget {
   }
 
   Future<void> _delete(BuildContext context, WidgetRef ref, UserSummary u) async {
-    final ok = await _confirm(
-        context, AccountStrings.deleteUser, AccountStrings.deleteUserQuestion(u.username), AccountStrings.delete);
+    final l = context.l10n;
+    final ok = await _confirm(context, l.deleteUser, l.deleteUserQuestion(u.username), l.delete);
     if (!ok) return;
     try {
       await ref.read(accountApiProvider).deleteUser(u.id);
       ref.invalidate(adminUsersProvider);
-      if (context.mounted) showSnack(context, AccountStrings.userDeleted(u.username));
+      if (context.mounted) showSnack(context, l.userDeleted(u.username));
     } catch (e) {
-      if (context.mounted) showSnack(context, friendlyApiError(e));
+      if (context.mounted) showSnack(context, friendlyApiError(l, e));
     }
   }
 }
@@ -162,17 +164,18 @@ class _InvitesSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final invites = ref.watch(adminInvitesProvider);
     final now = ref.watch(clockProvider)();
+    final l = context.l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _sectionLabel(context, AccountStrings.invites),
+        _sectionLabel(context, l.invites),
         BentoCard(
           padding: EdgeInsets.zero,
           child: invites.when(
             loading: () => const Padding(padding: EdgeInsets.all(16), child: LinearProgressIndicator()),
-            error: (e, _) => _asyncError(e),
+            error: (e, _) => _asyncError(context, e),
             data: (list) => list.isEmpty
-                ? const Padding(padding: EdgeInsets.all(16), child: Text(AccountStrings.noInvites))
+                ? Padding(padding: const EdgeInsets.all(16), child: Text(l.noInvites))
                 : Column(
                     children: [
                       for (final i in list) _InviteTile(invite: i, status: i.statusAt(now), now: now),
@@ -193,17 +196,18 @@ class _InviteTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = context.l10n;
     final active = status == InviteStatus.active;
     final exp = invite.expiresAt;
     final expiry = exp == null
         ? null
-        : (exp.isAfter(now) ? AccountStrings.expiresOn(_date(exp)) : AccountStrings.expiredOn(_date(exp)));
+        : (exp.isAfter(now) ? l.expiresOn(_date(l, exp)) : l.expiredOn(_date(l, exp)));
     return ListTile(
       key: Key('invite-${invite.code}'),
       title: Text(invite.code, style: const TextStyle(fontWeight: FontWeight.w800, letterSpacing: 1)),
       subtitle: Text([
-        inviteStatusLabel(status),
-        AccountStrings.uses(invite.uses, invite.maxUses),
+        inviteStatusLabel(l, status),
+        l.inviteUses(invite.uses, invite.maxUses),
         ?expiry,
       ].join(' · ')),
       leading: Icon(Icons.confirmation_number_rounded, color: active ? QodiTokens.orange : null),
@@ -216,7 +220,7 @@ class _InviteTile extends ConsumerWidget {
           : null,
       trailing: IconButton(
         key: Key('invite-revoke-${invite.code}'),
-        tooltip: AccountStrings.revokeInvite,
+        tooltip: l.revokeInvite,
         icon: const Icon(Icons.block_rounded),
         onPressed: () => _revoke(context, ref),
       ),
@@ -224,15 +228,15 @@ class _InviteTile extends ConsumerWidget {
   }
 
   Future<void> _revoke(BuildContext context, WidgetRef ref) async {
-    final ok = await _confirm(context, AccountStrings.revokeInvite, AccountStrings.revokeInviteQuestion(invite.code),
-        AccountStrings.revoke);
+    final l = context.l10n;
+    final ok = await _confirm(context, l.revokeInvite, l.revokeInviteQuestion(invite.code), l.revoke);
     if (!ok) return;
     try {
       await ref.read(accountApiProvider).revokeInvite(invite.code);
       ref.invalidate(adminInvitesProvider);
-      if (context.mounted) showSnack(context, AccountStrings.inviteRevoked);
+      if (context.mounted) showSnack(context, l.inviteRevoked);
     } catch (e) {
-      if (context.mounted) showSnack(context, friendlyApiError(e));
+      if (context.mounted) showSnack(context, friendlyApiError(l, e));
     }
   }
 }
@@ -263,8 +267,9 @@ class _InviteFormState extends State<_InviteForm> {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     return AlertDialog(
-      title: const Text(AccountStrings.createInvite),
+      title: Text(l.createInvite),
       content: Form(
         key: _form,
         child: Column(
@@ -275,8 +280,8 @@ class _InviteFormState extends State<_InviteForm> {
               controller: _hours,
               keyboardType: TextInputType.number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              decoration: const InputDecoration(labelText: AccountStrings.expiresInHours),
-              validator: _range(1, 720, AccountStrings.expiryRule),
+              decoration: InputDecoration(labelText: l.expiresInHours),
+              validator: _range(1, 720, l.expiryRule),
             ),
             const SizedBox(height: 10),
             TextFormField(
@@ -284,21 +289,21 @@ class _InviteFormState extends State<_InviteForm> {
               controller: _uses,
               keyboardType: TextInputType.number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              decoration: const InputDecoration(labelText: AccountStrings.maxUses),
-              validator: _range(1, 50, AccountStrings.usesRule),
+              decoration: InputDecoration(labelText: l.maxUses),
+              validator: _range(1, 50, l.usesRule),
             ),
           ],
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text(AccountStrings.cancel)),
+        TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(l.cancel)),
         FilledButton(
           key: const Key('invite-submit'),
           onPressed: () {
             if (!(_form.currentState?.validate() ?? false)) return;
             Navigator.of(context).pop((hours: int.parse(_hours.text.trim()), uses: int.parse(_uses.text.trim())));
           },
-          child: const Text(AccountStrings.create),
+          child: Text(l.create),
         ),
       ],
     );
@@ -315,9 +320,10 @@ class InviteShareDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final join = inviteJoinLink(serverBaseUrl, invite.code);
     final apk = androidApkLink(serverBaseUrl);
+    final l = context.l10n;
     Future<void> copy(String value) async {
       await Clipboard.setData(ClipboardData(text: value));
-      if (context.mounted) showSnack(context, AccountStrings.copied);
+      if (context.mounted) showSnack(context, l.copied);
     }
 
     Widget link(String key, String label, String value) => ListTile(
@@ -326,14 +332,14 @@ class InviteShareDialog extends StatelessWidget {
           subtitle: SelectableText(value, key: Key('$key-text')),
           trailing: IconButton(
             key: Key('$key-copy'),
-            tooltip: AccountStrings.copy,
+            tooltip: l.copy,
             icon: const Icon(Icons.copy_rounded),
             onPressed: () => copy(value),
           ),
         );
 
     return AlertDialog(
-      title: const Text(AccountStrings.inviteCreated),
+      title: Text(l.inviteCreated),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -350,17 +356,17 @@ class InviteShareDialog extends StatelessWidget {
               key: const Key('invite-code-copy'),
               onPressed: () => copy(invite.code),
               icon: const Icon(Icons.copy_rounded),
-              label: const Text(AccountStrings.copyCode),
+              label: Text(l.copyCode),
             ),
             const SizedBox(height: 4),
-            Text(AccountStrings.shareInviteHint, style: TextStyle(color: QodiColors.of(context).textMuted)),
-            link('invite-join', AccountStrings.joinLink, join),
-            link('invite-apk', AccountStrings.apkLink, apk),
+            Text(l.shareInviteHint, style: TextStyle(color: QodiColors.of(context).textMuted)),
+            link('invite-join', l.joinLink, join),
+            link('invite-apk', l.apkLink, apk),
           ],
         ),
       ),
       actions: [
-        FilledButton(onPressed: () => Navigator.of(context).pop(), child: const Text(AccountStrings.done)),
+        FilledButton(onPressed: () => Navigator.of(context).pop(), child: Text(l.done)),
       ],
     );
   }

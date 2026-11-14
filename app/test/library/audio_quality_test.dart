@@ -2,9 +2,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:qodi_music/features/device_music/domain/device_metadata.dart';
 import 'package:qodi_music/features/library/data/library_mappers.dart';
 import 'package:qodi_music/features/library/domain/audio_quality.dart';
+import 'package:qodi_music/features/library/ui/quality_text.dart';
 import 'package:qodi_music/shared/format.dart';
 
 import '../support/fixtures.dart';
+import '../support/l10n.dart';
 
 void main() {
   group('Track quality parsing', () {
@@ -52,21 +54,21 @@ void main() {
     }
 
     test('badge text: Hi-Res, Lossless, none for lossy', () {
-      expect(qualityBadgeText(QualityTier.hiRes), 'Hi-Res');
-      expect(qualityBadgeText(QualityTier.lossless), 'Lossless');
-      expect(qualityBadgeText(QualityTier.lossy), isNull);
+      expect(qualityBadgeText(en, QualityTier.hiRes), 'Hi-Res');
+      expect(qualityBadgeText(en, QualityTier.lossless), 'Lossless');
+      expect(qualityBadgeText(en, QualityTier.lossy), isNull);
     });
 
     test('transcoded stream says what is streamed and the source', () {
       final t = track('a', format: 'flac', lossless: true, bitDepth: 24, sampleRateHz: 96000);
-      expect(streamedQualityLabel(t, transcodedOpusKbps: 128), 'OPUS 128 · from FLAC 24/96');
-      expect(streamedQualityLabel(t), 'FLAC · 24/96');
+      expect(streamedQualityLabel(en, t, transcodedOpusKbps: 128), 'OPUS 128 · from FLAC 24/96');
+      expect(streamedQualityLabel(en, t), 'FLAC · 24/96');
     });
 
     test('track info rows: format, bitrate, sample rate, bit depth, channels, size', () {
       final t = track('a',
           format: 'flac', lossless: true, bitrateKbps: 900, bitDepth: 24, sampleRateHz: 96000, channels: 2, sizeBytes: 25 << 20);
-      expect(trackInfoRows(t, formatSize: formatBytes), [
+      expect(trackInfoRows(en, t, formatSize: formatBytes), [
         ('Format', 'FLAC'),
         ('Bitrate', '900 kbps'),
         ('Sample rate', '96 kHz'),
@@ -74,7 +76,7 @@ void main() {
         ('Channels', 'Stereo'),
         ('Size', '25.0 MB'),
       ]);
-      expect(trackInfoRows(track('b', format: 'mp3'), formatSize: formatBytes).sublist(1, 5).map((r) => r.$2),
+      expect(trackInfoRows(en, track('b', format: 'mp3'), formatSize: formatBytes).sublist(1, 5).map((r) => r.$2),
           everyElement('—'));
     });
   });

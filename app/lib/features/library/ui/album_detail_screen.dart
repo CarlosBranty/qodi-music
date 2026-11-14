@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../../core/theme/tokens.dart';
+import '../../../l10n/l10n.dart';
 import '../../../shared/format.dart';
 import '../../../shared/widgets/cover_art.dart';
 import '../../device_music/domain/device_track.dart';
@@ -48,7 +49,8 @@ class CollectionHeader extends ConsumerWidget {
     final device = tracks.isNotEmpty && tracks.every((t) => isDeviceTrackId(t.id));
     final showOffline = downloads.supported && !device;
     final offline = showOffline ? OfflineSummary.of(tracks, ref.watch(downloadsControllerProvider)) : null;
-    final offlineLabel = offline?.label;
+    final l = context.l10n;
+    final offlineLabel = offline?.label(l);
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
       child: Column(
@@ -80,11 +82,11 @@ class CollectionHeader extends ConsumerWidget {
               FilledButton.icon(
                 onPressed: tracks.isEmpty ? null : () => player.playTracks(tracks),
                 icon: const Icon(Icons.play_arrow_rounded),
-                label: const Text('Play'),
+                label: Text(l.play),
               ),
               const SizedBox(width: 10),
               IconButton.filledTonal(
-                tooltip: 'Shuffle',
+                tooltip: l.shuffle,
                 onPressed: tracks.isEmpty
                     ? null
                     : () async {
@@ -94,7 +96,7 @@ class CollectionHeader extends ConsumerWidget {
                 icon: const Icon(Icons.shuffle_rounded),
               ),
               IconButton.filledTonal(
-                tooltip: 'Add to playlist',
+                tooltip: l.addToPlaylist,
                 onPressed: tracks.isEmpty
                     ? null
                     : () => device
@@ -114,11 +116,11 @@ class CollectionHeader extends ConsumerWidget {
                         ),
                       )
                     : IconButton.filledTonal(
-                        tooltip: offline.complete ? OfflineStrings.downloaded : 'Download all',
+                        tooltip: offline.complete ? l.downloaded : l.downloadAll,
                         onPressed: tracks.isEmpty || offline.complete
                             ? null
                             : () {
-                                showSnack(context, 'Downloading ${songsLabel(tracks.length).toLowerCase()}');
+                                showSnack(context, l.downloadingSongs(tracks.length));
                                 downloads.downloadAll(tracks);
                               },
                         icon: Icon(offline.complete ? Icons.download_done_rounded : Icons.download_rounded),
@@ -138,15 +140,16 @@ class AlbumDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final detail = ref.watch(albumDetailProvider(albumId));
+    final l = context.l10n;
     return Scaffold(
-      appBar: AppBar(title: const Text('Album')),
+      appBar: AppBar(title: Text(l.album)),
       body: detail.when(
         data: (d) {
           final a = d.album;
           final meta = [
             a.artist,
             if (a.year != null) '${a.year}',
-            songsLabel(a.trackCount),
+            l.songCount(a.trackCount),
             formatDuration(Duration(milliseconds: a.durationMs)),
           ].join(' • ');
           return ListView.builder(
@@ -169,7 +172,7 @@ class AlbumDetailScreen extends ConsumerWidget {
           );
         },
         loading: () => const Center(child: CircularProgressIndicator(color: QodiTokens.orange)),
-        error: (e, _) => Center(child: Text('Could not load album\n$e', textAlign: TextAlign.center)),
+        error: (e, _) => Center(child: Text(l.albumLoadFailed('$e'), textAlign: TextAlign.center)),
       ),
     );
   }
@@ -183,18 +186,19 @@ class ArtistDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final tracks = ref.watch(artistTracksProvider(artistId));
     final albums = ref.watch(artistAlbumsProvider(artistId)).value ?? const <Album>[];
+    final l = context.l10n;
     return Scaffold(
-      appBar: AppBar(title: const Text('Artist')),
+      appBar: AppBar(title: Text(l.artist)),
       body: tracks.when(
         data: (list) {
-          final name = list.isEmpty ? 'Artist' : list.first.artist;
+          final name = list.isEmpty ? l.artist : list.first.artist;
           return CustomScrollView(
             slivers: [
               SliverToBoxAdapter(
                 child: CollectionHeader(
                   seed: artistId,
                   title: name,
-                  subtitle: '${albums.length} albums • ${songsLabel(list.length)}',
+                  subtitle: '${l.albumCount(albums.length)} • ${l.songCount(list.length)}',
                   tracks: list,
                   circle: true,
                   icon: Icons.person_rounded,
@@ -223,7 +227,7 @@ class ArtistDetailScreen extends ConsumerWidget {
           );
         },
         loading: () => const Center(child: CircularProgressIndicator(color: QodiTokens.orange)),
-        error: (e, _) => Center(child: Text('Could not load artist\n$e', textAlign: TextAlign.center)),
+        error: (e, _) => Center(child: Text(l.artistLoadFailed('$e'), textAlign: TextAlign.center)),
       ),
     );
   }

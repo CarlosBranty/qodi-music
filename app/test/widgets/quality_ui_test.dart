@@ -8,6 +8,7 @@ import 'package:qodi_music/shared/widgets/track_tile.dart';
 
 import '../support/fakes.dart';
 import '../support/fixtures.dart';
+import '../support/l10n.dart';
 
 const _session = {'server_url': 'http://nas:4040', 'token': 'tok', 'username': 'sajra'};
 final _hiRes = track('t1',
@@ -28,7 +29,11 @@ Future<void> _pump(WidgetTester tester, Widget home, {Map<String, Object> prefs 
   await tester.pumpWidget(ProviderScope(
     overrides: [...await baseOverrides(prefs: prefs), playerOverride(FakePlayer(_hiRes))],
     retry: (_, _) => null,
-    child: MaterialApp(theme: AppTheme.light(useGoogleFonts: false), home: home),
+    child: MaterialApp(
+        locale: const Locale('en'),
+        localizationsDelegates: appLocalizationsDelegates,
+        supportedLocales: appSupportedLocales,
+        theme: AppTheme.light(useGoogleFonts: false), home: home),
   ));
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 50));

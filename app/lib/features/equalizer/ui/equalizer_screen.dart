@@ -1,43 +1,33 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart' show NumberFormat;
 import 'package:material_ui/material_ui.dart';
 
 import '../../../core/theme/tokens.dart';
+import '../../../l10n/l10n.dart';
 import '../../../shared/widgets/bento_card.dart';
 import '../domain/equalizer.dart';
 import 'equalizer_controller.dart';
 
-/// User-facing copy of the equalizer (kept together for translation).
-abstract final class EqualizerStrings {
-  static const title = 'Equalizer';
-  static const reset = 'Reset';
-  static const enabled = 'Equalizer';
-  static const enabledHint = 'Shape the sound with presets or your own curve';
-  static const presets = 'Presets';
-  static const bands = 'Bands';
-  static const custom = 'Custom';
-  static const unavailableTitle = 'Not available on this platform';
-  static const unavailableBody = 'The equalizer works on Android. On this device the audio engine has no equalizer.';
-  static const waitingBands = 'Play a song to load the equalizer bands of this device.';
+String presetLabel(AppLocalizations l, EqualizerPreset p) => switch (p) {
+      EqualizerPreset.flat => l.presetFlat,
+      EqualizerPreset.bassBoost => l.presetBassBoost,
+      EqualizerPreset.trebleBoost => l.presetTrebleBoost,
+      EqualizerPreset.vocal => l.presetVocal,
+      EqualizerPreset.rock => l.presetRock,
+      EqualizerPreset.pop => l.presetPop,
+      EqualizerPreset.electronic => l.presetElectronic,
+      EqualizerPreset.acoustic => l.presetAcoustic,
+    };
 
-  static String preset(EqualizerPreset p) => switch (p) {
-        EqualizerPreset.flat => 'Flat',
-        EqualizerPreset.bassBoost => 'Bass boost',
-        EqualizerPreset.trebleBoost => 'Treble boost',
-        EqualizerPreset.vocal => 'Vocal',
-        EqualizerPreset.rock => 'Rock',
-        EqualizerPreset.pop => 'Pop',
-        EqualizerPreset.electronic => 'Electronic',
-        EqualizerPreset.acoustic => 'Acoustic',
-      };
-
-  static String gain(double db) => '${db > 0 ? '+' : ''}${db.toStringAsFixed(1)} dB';
-}
+/// `+1.5 dB`, `-3.0 dB` (decimal separator of [locale]).
+String formatGain(double db, {String? locale}) =>
+    '${db > 0 ? '+' : ''}${NumberFormat('0.0', locale).format(db)} dB';
 
 /// "60 Hz", "910 Hz", "3.6 kHz", "14 kHz".
-String formatFrequency(double hz) {
+String formatFrequency(double hz, {String? locale}) {
   if (hz < 1000) return '${hz.round()} Hz';
   final k = hz / 1000;
-  final text = k >= 10 || k == k.roundToDouble() ? k.round().toString() : k.toStringAsFixed(1);
+  final text = k >= 10 || k == k.roundToDouble() ? k.round().toString() : NumberFormat('0.0', locale).format(k);
   return '$text kHz';
 }
 
@@ -49,19 +39,20 @@ class EqualizerScreen extends ConsumerWidget {
     final state = ref.watch(equalizerControllerProvider);
     final controller = ref.read(equalizerControllerProvider.notifier);
     final c = QodiColors.of(context);
+    final l = context.l10n;
     Widget label(String t) => Padding(
           padding: const EdgeInsets.fromLTRB(8, 20, 8, 8),
           child: Text(t, style: TextStyle(color: c.textMuted, fontWeight: FontWeight.w700)),
         );
     return Scaffold(
       appBar: AppBar(
-        title: const Text(EqualizerStrings.title),
+        title: Text(l.equalizer),
         actions: [
           if (state.supported)
             TextButton(
               key: const Key('eq-reset'),
               onPressed: controller.reset,
-              child: const Text(EqualizerStrings.reset),
+              child: Text(l.reset),
             ),
         ],
       ),
@@ -77,19 +68,19 @@ class EqualizerScreen extends ConsumerWidget {
                     value: state.settings.enabled,
                     activeThumbColor: QodiTokens.orange,
                     secondary: const Icon(Icons.equalizer_rounded, color: QodiTokens.orange),
-                    title: const Text(EqualizerStrings.enabled, style: TextStyle(fontWeight: FontWeight.w700)),
-                    subtitle: const Text(EqualizerStrings.enabledHint),
+                    title: Text(l.equalizer, style: const TextStyle(fontWeight: FontWeight.w700)),
+                    subtitle: Text(l.equalizerHint),
                     onChanged: controller.setEnabled,
                   ),
                 ),
-                label(EqualizerStrings.presets),
+                label(l.presets),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
                   children: [
                     for (final p in EqualizerPreset.values)
                       ChoiceChip(
-                        label: Text(EqualizerStrings.preset(p)),
+                        label: Text(presetLabel(l, p)),
                         selected: state.settings.preset == p,
                         selectedColor: QodiTokens.orange,
                         labelStyle: TextStyle(
@@ -97,21 +88,21 @@ class EqualizerScreen extends ConsumerWidget {
                         onSelected: (_) => controller.selectPreset(p),
                       ),
                     if (state.settings.preset == null)
-                      const ChoiceChip(
-                        key: Key('eq-custom'),
-                        label: Text(EqualizerStrings.custom),
+                      ChoiceChip(
+                        key: const Key('eq-custom'),
+                        label: Text(l.presetCustom),
                         selected: true,
                         selectedColor: QodiTokens.orange,
-                        labelStyle: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                        labelStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
                       ),
                   ],
                 ),
-                label(EqualizerStrings.bands),
+                label(l.bands),
                 BentoCard(
                   child: state.parameters == null
                       ? Padding(
                           padding: const EdgeInsets.symmetric(vertical: 24),
-                          child: Text(EqualizerStrings.waitingBands,
+                          child: Text(l.equalizerWaitingBands,
                               textAlign: TextAlign.center, style: TextStyle(color: c.textMuted)),
                         )
                       : _Bands(state: state, onChanged: controller.setBandGain),
@@ -132,6 +123,7 @@ class _Bands extends StatelessWidget {
     final params = state.parameters!;
     final c = QodiColors.of(context);
     final enabled = state.settings.enabled;
+    final locale = context.l10n.localeName;
     return Opacity(
       opacity: enabled ? 1 : 0.5,
       child: Row(
@@ -140,7 +132,7 @@ class _Bands extends StatelessWidget {
             Expanded(
               child: Column(
                 children: [
-                  Text(EqualizerStrings.gain(i < state.gains.length ? state.gains[i] : 0),
+                  Text(formatGain(i < state.gains.length ? state.gains[i] : 0, locale: locale),
                       style: TextStyle(color: c.textMuted, fontSize: 10, fontWeight: FontWeight.w600)),
                   SizedBox(
                     height: 220,
@@ -157,7 +149,7 @@ class _Bands extends StatelessWidget {
                       ),
                     ),
                   ),
-                  Text(formatFrequency(params.centerFrequencies[i]),
+                  Text(formatFrequency(params.centerFrequencies[i], locale: locale),
                       maxLines: 1,
                       style: TextStyle(color: c.text, fontSize: 11, fontWeight: FontWeight.w700)),
                 ],
@@ -175,6 +167,7 @@ class _Unavailable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = QodiColors.of(context);
+    final l = context.l10n;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -184,10 +177,10 @@ class _Unavailable extends StatelessWidget {
             children: [
               const Icon(Icons.equalizer_rounded, size: 48, color: QodiTokens.orange),
               const SizedBox(height: 12),
-              const Text(EqualizerStrings.unavailableTitle,
-                  textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+              Text(l.equalizerUnavailableTitle,
+                  textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
               const SizedBox(height: 6),
-              Text(EqualizerStrings.unavailableBody,
+              Text(l.equalizerUnavailableBody,
                   textAlign: TextAlign.center, style: TextStyle(color: c.textMuted)),
             ],
           ),

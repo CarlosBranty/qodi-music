@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart' show NumberFormat;
+
 String _two(int n) => n.toString().padLeft(2, '0');
 
 /// `3:05` or `1:02:03`.
@@ -18,10 +20,10 @@ String formatListenTime(int ms) {
   return '${d.inMinutes} min';
 }
 
-String formatBytes(int bytes) {
-  if (bytes >= 1 << 30) return '${(bytes / (1 << 30)).toStringAsFixed(1)} GB';
-  if (bytes >= 1 << 20) return '${(bytes / (1 << 20)).toStringAsFixed(1)} MB';
-  return '${(bytes / 1024).toStringAsFixed(0)} KB';
+/// `1.5 GB`, `12.0 MB`, `300 KB` (decimal separator of [locale]).
+String formatBytes(int bytes, {String? locale}) {
+  final one = NumberFormat('0.0', locale), none = NumberFormat('0', locale);
+  if (bytes >= 1 << 30) return '${one.format(bytes / (1 << 30))} GB';
+  if (bytes >= 1 << 20) return '${one.format(bytes / (1 << 20))} MB';
+  return '${none.format(bytes / 1024)} KB';
 }
-
-String songsLabel(int n) => n == 1 ? '1 Song' : '$n Songs';

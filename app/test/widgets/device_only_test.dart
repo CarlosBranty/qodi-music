@@ -14,6 +14,7 @@ import 'package:qodi_music/shared/widgets/track_tile.dart';
 import '../support/fake_device.dart';
 import '../support/fake_http.dart';
 import '../support/fakes.dart';
+import '../support/l10n.dart';
 
 /// Fails the test if a login is attempted.
 class NoLoginGateway implements AuthGateway {
@@ -62,6 +63,9 @@ void main() {
     await tester.pumpWidget(UncontrolledProviderScope(
       container: container,
       child: MaterialApp.router(
+        locale: const Locale('en'),
+        localizationsDelegates: appLocalizationsDelegates,
+        supportedLocales: appSupportedLocales,
         theme: AppTheme.light(useGoogleFonts: false),
         routerConfig: container.read(appRouterProvider),
       ),

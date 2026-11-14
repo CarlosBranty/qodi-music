@@ -11,6 +11,7 @@ import 'core/platform/platform_services.dart';
 import 'features/device_music/domain/device_track.dart';
 import 'features/player/data/qodi_audio_handler.dart';
 import 'features/player/ui/player_providers.dart';
+import 'l10n/l10n.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,10 +19,11 @@ Future<void> main() async {
   JustAudioMediaKit.ensureInitialized(linux: true, windows: true);
 
   final prefs = await SharedPreferences.getInstance();
+  final settings = SettingsStore(prefs);
   final platform = await createPlatformServices(prefs);
   final container = ProviderContainer(
     overrides: [
-      settingsStoreProvider.overrideWithValue(SettingsStore(prefs)),
+      settingsStoreProvider.overrideWithValue(settings),
       platformServicesProvider.overrideWithValue(platform),
     ],
     retry: (_, _) => null,
@@ -40,9 +42,11 @@ Future<void> main() async {
         final cover = urls.cover(t.id);
         return cover == null ? null : Uri.parse(cover);
       }),
-      config: const AudioServiceConfig(
+      config: AudioServiceConfig(
         androidNotificationChannelId: 'dev.qodi.qodi_music.playback',
-        androidNotificationChannelName: 'Qodi Music playback',
+        // Shown in Android's notification settings; uses the language
+        // preference (or device language) at start-up.
+        androidNotificationChannelName: appStringsFor(settings.language).playbackChannelName,
         androidNotificationOngoing: true,
         androidStopForegroundOnPause: true,
       ),

@@ -51,6 +51,7 @@ Release builds: `flutter build web --release`, `flutter build linux --release`,
   progress ring while downloading. Web has no downloads, so no badge there.
 - Equalizer (Android) — see below.
 - Audio quality per song, accounts with invites, and Android self-update — see below.
+- English and Spanish UI — see below.
 
 ## Equalizer
 
@@ -170,6 +171,42 @@ player (queue, background playback, media notification / MPRIS).
 | iOS | Only files imported into the app (`Documents/Music`) | iOS does not let apps read the Music app library as files. Use Settings › "Import songs", or drop files into the app's `Music` folder in the Files app / Finder (file sharing is enabled). |
 | Web | — | Hidden. |
 
+## Languages
+
+The UI is in English and Spanish (neutral Latin American). By default it
+follows the device/browser language: any `es*` locale shows Spanish, anything
+else English. Settings › Language offers System / English / Español; the choice
+is stored in shared preferences (`language`: `system`, `en`, `es`) and applied
+immediately through `MaterialApp.locale`. Track, album and artist names, the
+"Qodi" brand and "Hi-Res" are never translated. Dates and decimal numbers
+(file sizes, equalizer dB/kHz) use the active locale's format through `intl`.
+The Android notification channel name takes the language at start-up. iOS
+declares both languages in `CFBundleLocalizations`.
+
+Strings use Flutter's gen-l10n (`l10n.yaml`): `lib/l10n/app_en.arb` is the
+template, `lib/l10n/app_es.arb` the translation, and the classes are generated
+into `lib/l10n/generated/` (the synthetic `flutter_gen` package no longer
+exists). `flutter pub get`, `flutter run` and `flutter build` regenerate them
+(`generate: true`); run `flutter gen-l10n` after editing an ARB file to
+refresh them by hand.
+
+To add a string:
+
+1. Add the key to `app_en.arb` and the same key to `app_es.arb` (a test fails
+   when a key is missing or empty in Spanish, or the placeholders differ).
+2. Use placeholders instead of concatenating sentences — `"{name} deleted"` —
+   and ICU plurals for counts:
+   `"{count, plural, =1{1 song} other{{count} songs}}"`. Declare non-String
+   placeholders under `"@key": {"placeholders": {"count": {"type": "int"}}}`.
+3. Run `flutter gen-l10n`, then use it in widgets as `context.l10n.key`
+   (import `lib/l10n/l10n.dart`). Code without a `BuildContext` receives an
+   `AppLocalizations` argument; domain code returns enums/codes
+   (`AccountError`, `UpdateResultCode`) that the UI turns into text.
+
+`MaterialApp` uses `appLocalizationsDelegates` from `lib/l10n/l10n.dart`
+(app strings plus `material_ui`'s Material/Cupertino/Widgets delegates).
+Widget tests pump `MaterialApp` with those delegates and `locale: Locale('en')`.
+
 ## Layout
 
 ```
@@ -180,6 +217,7 @@ lib/
              update — each with
              domain/data/ui
   shared/    VinylCover, ArcWaveformSeekbar, BentoCard, PillNavBar, TrackTile, ...
+  l10n/      ARB files (en, es), generated AppLocalizations, delegates/locale rules
 ```
 
 Domain code is pure Dart (ports + logic); adapters live in `data/`; Riverpod

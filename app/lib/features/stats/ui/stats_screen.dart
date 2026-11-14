@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../../core/theme/tokens.dart';
+import '../../../l10n/l10n.dart';
 import '../../../shared/format.dart';
 import '../../../shared/widgets/bento_card.dart';
 import '../../../shared/widgets/connect_server_hint.dart';
@@ -12,16 +13,20 @@ import '../../library/ui/track_actions.dart';
 import '../domain/stats_summary.dart';
 import 'stats_providers.dart';
 
+String statsRangeLabel(AppLocalizations l, StatsRange r) => switch (r) {
+      StatsRange.week => l.range7Days,
+      StatsRange.month => l.range30Days,
+      StatsRange.all => l.rangeAllTime,
+    };
+
 class StatsScreen extends ConsumerWidget {
   const StatsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = context.l10n;
     if (!ref.watch(serverConnectedProvider)) {
-      return const ConnectServerHint(
-        title: 'Stats live on your server',
-        message: 'Listening stats are computed by your music server. Connect one to see them.',
-      );
+      return ConnectServerHint(title: l.statsServerTitle, message: l.statsServerMessage);
     }
     final range = ref.watch(statsRangeProvider);
     final summary = ref.watch(statsSummaryProvider);
@@ -34,7 +39,7 @@ class StatsScreen extends ConsumerWidget {
         children: [
           Padding(
             padding: const EdgeInsets.only(left: 4, bottom: 12),
-            child: Text('Your Stats', style: text.headlineMedium?.copyWith(fontWeight: FontWeight.w800)),
+            child: Text(l.yourStats, style: text.headlineMedium?.copyWith(fontWeight: FontWeight.w800)),
           ),
           _RangeSelector(
             value: range,
@@ -49,7 +54,7 @@ class StatsScreen extends ConsumerWidget {
             ),
             error: (e, _) => Padding(
               padding: const EdgeInsets.all(32),
-              child: Text('Could not load stats\n$e', textAlign: TextAlign.center),
+              child: Text(l.statsLoadFailed('$e'), textAlign: TextAlign.center),
             ),
           ),
         ],
@@ -82,7 +87,7 @@ class _RangeSelector extends StatelessWidget {
                     color: r == value ? QodiTokens.ink : Colors.transparent,
                     borderRadius: BorderRadius.circular(40),
                   ),
-                  child: Text(r.label,
+                  child: Text(statsRangeLabel(context.l10n, r),
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
@@ -130,6 +135,7 @@ class StatsBento extends ConsumerWidget {
     final share = summary.topArtistShare;
     final topArtist = summary.topArtists.isEmpty ? null : summary.topArtists.first;
     final tracks = summary.topTracks.map((t) => t.track).toList();
+    final l = context.l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -143,12 +149,12 @@ class StatsBento extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Listening time',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                  Text(l.listeningTime,
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 6),
                   Text(formatListenTime(summary.totalListenMs),
                       style: text.displaySmall?.copyWith(color: Colors.white, fontWeight: FontWeight.w800)),
-                  Text(range.label, style: TextStyle(color: Colors.white.withValues(alpha: 0.8))),
+                  Text(statsRangeLabel(l, range), style: TextStyle(color: Colors.white.withValues(alpha: 0.8))),
                 ],
               ),
             ),
@@ -157,9 +163,9 @@ class StatsBento extends ConsumerWidget {
         const SizedBox(height: 12),
         Row(
           children: [
-            Expanded(child: _Metric(icon: Icons.play_circle_outline_rounded, label: 'Total plays', value: '${summary.totalPlays}')),
+            Expanded(child: _Metric(icon: Icons.play_circle_outline_rounded, label: l.totalPlays, value: '${summary.totalPlays}')),
             const SizedBox(width: 12),
-            Expanded(child: _Metric(icon: Icons.library_music_outlined, label: 'Unique tracks', value: '${summary.uniqueTracks}')),
+            Expanded(child: _Metric(icon: Icons.library_music_outlined, label: l.uniqueTracks, value: '${summary.uniqueTracks}')),
           ],
         ),
         const SizedBox(height: 12),
@@ -182,19 +188,19 @@ class StatsBento extends ConsumerWidget {
                               children: [
                                 Text('${(share * 100).round()}%',
                                     style: text.headlineSmall?.copyWith(fontWeight: FontWeight.w800)),
-                                Text('of plays', style: TextStyle(color: c.textMuted, fontSize: 11)),
+                                Text(l.ofPlays, style: TextStyle(color: c.textMuted, fontSize: 11)),
                               ],
                             ),
                           ),
                         ),
                       ),
                       const SizedBox(height: 10),
-                      Text(topArtist?.name ?? 'No plays yet',
+                      Text(topArtist?.name ?? l.noPlaysYet,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           textAlign: TextAlign.center,
                           style: const TextStyle(fontWeight: FontWeight.w700)),
-                      Text('Top artist', style: TextStyle(color: c.textMuted, fontSize: 12)),
+                      Text(l.topArtist, style: TextStyle(color: c.textMuted, fontSize: 12)),
                     ],
                   ),
                 ),
@@ -206,8 +212,8 @@ class StatsBento extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Daily', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
-                      Text('minutes listened',
+                      Text(l.daily, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                      Text(l.minutesListened,
                           style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 11)),
                       const SizedBox(height: 12),
                       Expanded(
@@ -239,12 +245,12 @@ class StatsBento extends ConsumerWidget {
             children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 4, 20, 4),
-                child: Text('Top tracks', style: text.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
+                child: Text(l.topTracks, style: text.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
               ),
               if (tracks.isEmpty)
                 Padding(
                   padding: const EdgeInsets.all(20),
-                  child: Text('Play some music to see your top tracks.', style: TextStyle(color: c.textMuted)),
+                  child: Text(l.topTracksEmpty, style: TextStyle(color: c.textMuted)),
                 ),
               for (var i = 0; i < tracks.length; i++)
                 ConnectedTrackTile(

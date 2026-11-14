@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/api/api_client.dart';
 import '../../../core/config/core_providers.dart';
+import '../../../l10n/l10n.dart';
 import '../data/apk_installer.dart';
 import '../data/package_info_version.dart';
 import '../data/release_api.dart';
@@ -20,11 +21,23 @@ final updateClockProvider = Provider<DateTime Function()>((ref) => DateTime.now)
 
 enum UpdateError { checksumMismatch, downloadFailed, permissionDenied, installFailed }
 
-String updateErrorMessage(UpdateError e) => switch (e) {
-      UpdateError.checksumMismatch => UpdateStrings.checksumMismatch,
-      UpdateError.downloadFailed => UpdateStrings.downloadFailed,
-      UpdateError.permissionDenied => UpdateStrings.installPermission,
-      UpdateError.installFailed => UpdateStrings.installFailed,
+String updateErrorMessage(AppLocalizations l, UpdateError e) => switch (e) {
+      UpdateError.checksumMismatch => l.checksumMismatch,
+      UpdateError.downloadFailed => l.updateDownloadFailed,
+      UpdateError.permissionDenied => l.installPermission,
+      UpdateError.installFailed => l.installFailed,
+    };
+
+/// Text of a persisted [UpdateResultCode] in the active language (values
+/// stored as text by older versions are shown as they are).
+String describeUpdateResult(AppLocalizations l, String code) => switch (code) {
+      UpdateResultCode.upToDate => l.upToDate,
+      UpdateResultCode.noPublished => l.noPublishedUpdate,
+      UpdateResultCode.failed => l.checkFailed,
+      UpdateResultCode.noServer => l.updateNoServer,
+      _ when code.startsWith(UpdateResultCode.availablePrefix) =>
+        l.versionAvailable(code.substring(UpdateResultCode.availablePrefix.length)),
+      _ => code,
     };
 
 class UpdateState {
@@ -42,7 +55,7 @@ class UpdateState {
   final bool checking;
   final DateTime? lastCheck;
 
-  /// Short text of the last check (persisted).
+  /// [UpdateResultCode] of the last check (persisted).
   final String? lastResult;
   final UpdateCheckResult? result;
 
@@ -107,7 +120,7 @@ class UpdateController extends Notifier<UpdateState> {
     final server = settings.serverUrl?.trim() ?? '';
     final now = ref.read(updateClockProvider)();
     if (server.isEmpty) {
-      if (!auto) state = state.copyWith(lastResult: UpdateStrings.noServer);
+      if (!auto) state = state.copyWith(lastResult: UpdateResultCode.noServer);
       return null;
     }
     if (auto && !shouldAutoCheck(lastCheck: state.lastCheck, now: now)) return null;
@@ -120,7 +133,7 @@ class UpdateController extends Notifier<UpdateState> {
     } catch (e) {
       result = UpdateCheckFailed(e);
     }
-    final text = describeResult(result);
+    final text = resultCode(result);
     await settings.setUpdateCheck(now, text);
     state = state.copyWith(checking: false, lastCheck: now, lastResult: text, result: result);
     return result;

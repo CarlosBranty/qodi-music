@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../../core/theme/tokens.dart';
+import '../../../l10n/l10n.dart';
 import '../../../shared/format.dart';
 import '../../../shared/widgets/track_tile.dart';
 import '../../downloads/ui/downloads_controller.dart';
@@ -14,6 +15,7 @@ import '../../player/ui/player_providers.dart';
 import '../../playlists/ui/playlist_picker.dart';
 import '../domain/audio_quality.dart';
 import '../domain/entities.dart';
+import 'quality_text.dart';
 
 void showSnack(BuildContext context, String message) {
   ScaffoldMessenger.maybeOf(context)
@@ -25,6 +27,7 @@ void showSnack(BuildContext context, String message) {
 Future<void> showTrackActions(BuildContext context, WidgetRef ref, Track track) {
   final downloads = ref.read(downloadsControllerProvider.notifier);
   final device = isDeviceTrackId(track.id);
+  final l = context.l10n;
   return showModalBottomSheet<void>(
     context: context,
     builder: (sheet) {
@@ -39,25 +42,25 @@ Future<void> showTrackActions(BuildContext context, WidgetRef ref, Track track) 
               const Divider(),
               ListTile(
                 leading: const Icon(Icons.queue_play_next_rounded),
-                title: const Text('Play next'),
+                title: Text(l.playNext),
                 onTap: () {
                   close();
                   ref.read(playerPortProvider).playNext(track);
-                  showSnack(context, 'Playing next: ${track.title}');
+                  showSnack(context, l.playingNext(track.title));
                 },
               ),
               ListTile(
                 leading: const Icon(Icons.queue_music_rounded),
-                title: const Text('Add to queue'),
+                title: Text(l.addToQueue),
                 onTap: () {
                   close();
                   ref.read(playerPortProvider).enqueue(track);
-                  showSnack(context, 'Added to queue');
+                  showSnack(context, l.addedToQueue);
                 },
               ),
               ListTile(
                 leading: const Icon(Icons.playlist_add_rounded),
-                title: const Text('Add to playlist'),
+                title: Text(l.addToPlaylist),
                 onTap: () {
                   close();
                   device ? showDevicePlaylistPicker(context, ref, [track]) : showPlaylistPicker(context, ref, [track]);
@@ -66,7 +69,7 @@ Future<void> showTrackActions(BuildContext context, WidgetRef ref, Track track) 
               if (downloads.supported && !device)
                 ListTile(
                   leading: Icon(downloaded ? Icons.delete_outline_rounded : Icons.download_rounded),
-                  title: Text(downloaded ? 'Remove download' : 'Download'),
+                  title: Text(downloaded ? l.removeDownload : l.download),
                   onTap: () {
                     close();
                     downloaded ? downloads.delete(track.id) : downloads.download(track);
@@ -74,7 +77,7 @@ Future<void> showTrackActions(BuildContext context, WidgetRef ref, Track track) 
                 ),
               ListTile(
                 leading: const Icon(Icons.album_rounded),
-                title: Text('Go to album · ${track.album}'),
+                title: Text(l.goToAlbum(track.album)),
                 onTap: () {
                   close();
                   context.go(device ? '/library/device/album/${track.albumId}' : '/explore/album/${track.albumId}');
@@ -82,7 +85,7 @@ Future<void> showTrackActions(BuildContext context, WidgetRef ref, Track track) 
               ),
               ListTile(
                 leading: const Icon(Icons.person_rounded),
-                title: Text('Go to artist · ${track.artist}'),
+                title: Text(l.goToArtist(track.artist)),
                 onTap: () {
                   close();
                   context.go(device ? '/library/device/artist/${track.artistId}' : '/explore/artist/${track.artistId}');
@@ -91,7 +94,7 @@ Future<void> showTrackActions(BuildContext context, WidgetRef ref, Track track) 
               ListTile(
                 key: const Key('track-info'),
                 leading: const Icon(Icons.info_outline_rounded),
-                title: const Text(QualityStrings.trackInfo),
+                title: Text(l.trackInfo),
                 subtitle: Text(qualityLabel(track)),
                 onTap: () {
                   close();
@@ -108,8 +111,9 @@ Future<void> showTrackActions(BuildContext context, WidgetRef ref, Track track) 
 
 /// Dialog with the audio properties of [track] (format, bitrate, ...).
 Future<void> showTrackInfo(BuildContext context, Track track) {
-  final rows = trackInfoRows(track, formatSize: formatBytes);
-  final badge = qualityBadgeText(qualityTier(track));
+  final l = context.l10n;
+  final rows = trackInfoRows(l, track, formatSize: (b) => formatBytes(b, locale: l.localeName));
+  final badge = qualityBadgeText(l, qualityTier(track));
   return showDialog<void>(
     context: context,
     builder: (dialog) => AlertDialog(
@@ -192,7 +196,7 @@ class ConnectedTrackTile extends ConsumerWidget {
               ? const OfflineBadge()
               : null),
       onFavorite: () => toggleTrackFavorite(ref, track).catchError((Object _) {
-        if (context.mounted) showSnack(context, 'Could not update favorites');
+        if (context.mounted) showSnack(context, context.l10n.favoritesUpdateFailed);
       }),
       onTap: () => ref.read(playerPortProvider).playTracks(queue, startIndex: index),
       onMore: () => showTrackActions(context, ref, track),

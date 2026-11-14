@@ -78,10 +78,10 @@ abstract interface class DeviceMusicPlatform {
   bool get importsFiles;
 
   /// Opens a folder picker; null when cancelled.
-  Future<String?> pickFolder();
+  Future<String?> pickFolder({String? dialogTitle});
 
   /// Copies user-picked audio files into the app (iOS). Returns the count.
-  Future<int> importFiles();
+  Future<int> importFiles({String? dialogTitle});
 }
 
 /// Device music adapters for the current platform (null on web).

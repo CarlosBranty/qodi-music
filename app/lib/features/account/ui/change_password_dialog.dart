@@ -3,14 +3,16 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../../core/api/api_error.dart';
 import '../../../core/theme/tokens.dart';
+import '../../../l10n/l10n.dart';
 import '../domain/account.dart';
+import 'account_messages.dart';
 import 'account_providers.dart';
 
 /// Maps a change-password failure to a user-facing message.
-String changePasswordErrorMessage(Object error) {
-  if (error is InvalidCredentialsException) return AccountStrings.wrongCurrentPassword;
-  if (error is ApiException && error.code == 'bad_request') return AccountStrings.passwordRule;
-  return friendlyApiError(error);
+String changePasswordErrorMessage(AppLocalizations l, Object error) {
+  if (error is InvalidCredentialsException) return l.wrongCurrentPassword;
+  if (error is ApiException && error.code == 'bad_request') return l.passwordRule;
+  return friendlyApiError(l, error);
 }
 
 /// Returns true when the password was changed.
@@ -41,6 +43,7 @@ class _ChangePasswordDialogState extends ConsumerState<ChangePasswordDialog> {
   }
 
   Future<void> _save() async {
+    final l = context.l10n;
     if (!(_form.currentState?.validate() ?? false)) return;
     setState(() {
       _busy = true;
@@ -51,13 +54,14 @@ class _ChangePasswordDialogState extends ConsumerState<ChangePasswordDialog> {
       if (mounted) Navigator.of(context).pop(true);
       return;
     } catch (e) {
-      _error = changePasswordErrorMessage(e);
+      _error = changePasswordErrorMessage(l, e);
     }
     if (mounted) setState(() => _busy = false);
   }
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     TextFormField field(String key, TextEditingController c, String hint, String? Function(String?) v) =>
         TextFormField(
           key: Key(key),
@@ -67,20 +71,20 @@ class _ChangePasswordDialogState extends ConsumerState<ChangePasswordDialog> {
           validator: v,
         );
     return AlertDialog(
-      title: const Text(AccountStrings.changePassword),
+      title: Text(l.changePassword),
       content: Form(
         key: _form,
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              field('pw-current', _current, AccountStrings.currentPassword,
-                  (v) => (v == null || v.isEmpty) ? AccountStrings.enterPassword : null),
+              field('pw-current', _current, l.currentPassword,
+                  (v) => (v == null || v.isEmpty) ? l.enterPassword : null),
               const SizedBox(height: 10),
-              field('pw-new', _next, AccountStrings.newPassword, validateNewPassword),
+              field('pw-new', _next, l.newPassword, (v) => accountErrorText(l, validateNewPassword(v))),
               const SizedBox(height: 10),
-              field('pw-confirm', _confirm, AccountStrings.confirmNewPassword,
-                  (v) => validatePasswordConfirmation(v, _next.text)),
+              field('pw-confirm', _confirm, l.confirmNewPassword,
+                  (v) => accountErrorText(l, validatePasswordConfirmation(v, _next.text))),
               if (_error != null) ...[
                 const SizedBox(height: 12),
                 Text(_error!,
@@ -94,9 +98,9 @@ class _ChangePasswordDialogState extends ConsumerState<ChangePasswordDialog> {
       actions: [
         TextButton(
             onPressed: _busy ? null : () => Navigator.of(context).pop(false),
-            child: const Text(AccountStrings.cancel)),
+            child: Text(l.cancel)),
         FilledButton(
-            key: const Key('pw-save'), onPressed: _busy ? null : _save, child: const Text(AccountStrings.save)),
+            key: const Key('pw-save'), onPressed: _busy ? null : _save, child: Text(l.save)),
       ],
     );
   }

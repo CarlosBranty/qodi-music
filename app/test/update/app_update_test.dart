@@ -8,6 +8,7 @@ import 'package:qodi_music/features/update/ui/update_controller.dart';
 
 import '../support/fake_http.dart';
 import '../support/fakes.dart';
+import '../support/l10n.dart';
 
 const _release = AndroidRelease(
     versionName: '0.2.0', versionCode: 57, url: '/downloads/android/qodi-music.apk', sha256: 'ABC123', sizeBytes: 10);
@@ -148,7 +149,8 @@ void main() {
       now = now.add(const Duration(hours: 2));
       expect(await ctl.check(auto: true), isNull);
       expect(releases.calls, ['http://nas:4040']);
-      expect(c.read(settingsStoreProvider).updateLastResult, 'Version 0.2.0 is available');
+      expect(c.read(settingsStoreProvider).updateLastResult, 'available:0.2.0', reason: 'stored as a language-independent code');
+      expect(describeUpdateResult(en, c.read(settingsStoreProvider).updateLastResult!), 'Version 0.2.0 is available');
       // A manual check is never throttled.
       expect(await ctl.check(), isA<UpdateAvailable>());
       // The manual check also restarts the 6 h window.
@@ -176,7 +178,7 @@ void main() {
       expect(await ctl.check(), isA<NoPublishedUpdate>());
       releases.error = Exception('offline');
       expect(await ctl.check(), isA<UpdateCheckFailed>());
-      expect(c.read(updateControllerProvider).lastResult, UpdateStrings.checkFailed);
+      expect(c.read(updateControllerProvider).lastResult, UpdateResultCode.failed);
     });
 
     test('skipped without a known server URL or off Android', () async {

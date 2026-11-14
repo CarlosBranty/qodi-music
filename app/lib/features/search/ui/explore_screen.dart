@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../../core/theme/tokens.dart';
+import '../../../l10n/l10n.dart';
 import '../../../shared/widgets/connect_server_hint.dart';
 import '../../../shared/widgets/cover_art.dart';
 import '../../auth/ui/auth_controller.dart';
@@ -46,19 +47,16 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final c = QodiColors.of(context);
+    final l = context.l10n;
     if (!ref.watch(serverConnectedProvider)) {
-      return const ConnectServerHint(
-        title: 'Explore your server',
-        message: 'Browsing albums and artists of your music server needs a connection. '
-            'Your device music is in Library.',
-      );
+      return ConnectServerHint(title: l.exploreServerTitle, message: l.exploreServerMessage);
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
-          child: Text('Browse Music',
+          child: Text(l.browseMusic,
               style: text.headlineMedium?.copyWith(fontWeight: FontWeight.w800, color: c.text)),
         ),
         Padding(
@@ -68,12 +66,12 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
             onChanged: _onChanged,
             textInputAction: TextInputAction.search,
             decoration: InputDecoration(
-              hintText: 'Search songs, artists, albums',
+              hintText: l.searchHint,
               prefixIcon: const Icon(Icons.search_rounded),
               suffixIcon: _controller.text.isEmpty
                   ? null
                   : IconButton(
-                      tooltip: 'Clear',
+                      tooltip: l.clear,
                       icon: const Icon(Icons.close_rounded),
                       onPressed: () {
                         _controller.clear();
@@ -89,9 +87,9 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
               children: [
-                FilterPill('Albums', selected: _tab == 0, onTap: () => setState(() => _tab = 0)),
+                FilterPill(l.albums, selected: _tab == 0, onTap: () => setState(() => _tab = 0)),
                 const SizedBox(width: 8),
-                FilterPill('Artists', selected: _tab == 1, onTap: () => setState(() => _tab = 1)),
+                FilterPill(l.artists, selected: _tab == 1, onTap: () => setState(() => _tab = 1)),
               ],
             ),
           ),
@@ -133,10 +131,10 @@ class FilterPill extends StatelessWidget {
   }
 }
 
-Widget _error(Object e) => Center(
+Widget _error(BuildContext context, Object e) => Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
-        child: Text('Something went wrong.\n$e', textAlign: TextAlign.center),
+        child: Text(context.l10n.somethingWentWrongDetail('$e'), textAlign: TextAlign.center),
       ),
     );
 
@@ -150,14 +148,14 @@ class _SearchResults extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return ref.watch(searchTracksProvider(query)).when(
           data: (tracks) => tracks.isEmpty
-              ? const Center(child: Text('No songs found'))
+              ? Center(child: Text(context.l10n.noSongsFound))
               : ListView.builder(
                   padding: const EdgeInsets.only(bottom: 24),
                   itemCount: tracks.length,
                   itemBuilder: (_, i) => ConnectedTrackTile(track: tracks[i], queue: tracks, index: i),
                 ),
           loading: () => _loading,
-          error: (e, _) => _error(e),
+          error: (e, _) => _error(context, e),
         );
   }
 }
@@ -169,7 +167,7 @@ class _AlbumsGrid extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return ref.watch(albumsProvider).when(
           data: (albums) => albums.isEmpty
-              ? const Center(child: Text('Your library is empty'))
+              ? Center(child: Text(context.l10n.libraryEmpty))
               : GridView.builder(
                   padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
                   gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
@@ -182,7 +180,7 @@ class _AlbumsGrid extends ConsumerWidget {
                   itemBuilder: (_, i) => AlbumCard(albums[i]),
                 ),
           loading: () => _loading,
-          error: (e, _) => _error(e),
+          error: (e, _) => _error(context, e),
         );
   }
 }
@@ -236,14 +234,14 @@ class _ArtistsList extends ConsumerWidget {
                 contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
                 leading: CoverArt(seed: a.id, size: 48, circle: true, icon: Icons.person_rounded),
                 title: Text(a.name, style: const TextStyle(fontWeight: FontWeight.w700)),
-                subtitle: Text('${a.albumCount} albums • ${a.trackCount} songs',
+                subtitle: Text('${context.l10n.albumCount(a.albumCount)} • ${context.l10n.songCountLower(a.trackCount)}',
                     style: TextStyle(color: c.textMuted)),
                 onTap: () => context.go('/explore/artist/${a.id}'),
               );
             },
           ),
           loading: () => _loading,
-          error: (e, _) => _error(e),
+          error: (e, _) => _error(context, e),
         );
   }
 }

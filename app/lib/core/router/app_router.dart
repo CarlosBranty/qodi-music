@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../l10n/l10n.dart';
 import '../../features/account/domain/account.dart';
 import '../../features/account/ui/register_screen.dart';
 import '../../features/account/ui/users_screen.dart';
@@ -135,12 +136,12 @@ class AppShell extends StatelessWidget {
   const AppShell({super.key, required this.shell});
   final StatefulNavigationShell shell;
 
-  static const items = [
-    PillNavItem(Icons.home_rounded, 'Home'),
-    PillNavItem(Icons.explore_rounded, 'Explore'),
-    PillNavItem(Icons.library_music_rounded, 'Library'),
-    PillNavItem(Icons.insights_rounded, 'Stats'),
-  ];
+  static List<PillNavItem> items(AppLocalizations l) => [
+        PillNavItem(Icons.home_rounded, l.navHome),
+        PillNavItem(Icons.explore_rounded, l.navExplore),
+        PillNavItem(Icons.library_music_rounded, l.navLibrary),
+        PillNavItem(Icons.insights_rounded, l.navStats),
+      ];
 
   @override
   Widget build(BuildContext context) {
@@ -151,7 +152,7 @@ class AppShell extends StatelessWidget {
         children: [
           const MiniPlayer(),
           PillNavBar(
-            items: items,
+            items: items(context.l10n),
             currentIndex: shell.currentIndex,
             onTap: (i) => shell.goBranch(i, initialLocation: i == shell.currentIndex),
           ),

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../../core/theme/tokens.dart';
+import '../../../l10n/l10n.dart';
 import '../../../shared/format.dart';
 import '../../../shared/widgets/cover_art.dart';
 import '../../auth/ui/auth_controller.dart';
@@ -27,9 +28,10 @@ class LibraryScreen extends ConsumerWidget {
     final server = ref.watch(serverConnectedProvider);
     final device = ref.watch(deviceMusicSupportedProvider);
     // Without a server session only the device section is shown.
+    final l = context.l10n;
     final tabs = [
-      if (server) ...['Playlists', 'Favorites', if (offline) 'Downloads'],
-      if (device) 'On this device',
+      if (server) ...[l.playlists, l.favorites, if (offline) l.downloads],
+      if (device) l.onThisDevice,
     ];
     final initial = switch (initialTab) {
       'favorites' when server => 1,
@@ -38,7 +40,7 @@ class LibraryScreen extends ConsumerWidget {
       _ => 0,
     };
     if (tabs.isEmpty) {
-      return const Center(child: Text('Connect to a server in Settings to see your library.'));
+      return Center(child: Text(l.libraryNeedsServer));
     }
     final text = Theme.of(context).textTheme;
     return DefaultTabController(
@@ -50,7 +52,7 @@ class LibraryScreen extends ConsumerWidget {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
-            child: Text('Your Library', style: text.headlineMedium?.copyWith(fontWeight: FontWeight.w800)),
+            child: Text(l.yourLibrary, style: text.headlineMedium?.copyWith(fontWeight: FontWeight.w800)),
           ),
           TabBar(
             isScrollable: true,
@@ -94,7 +96,7 @@ class _PlaylistsTab extends ConsumerWidget {
       try {
         await ref.read(playlistsControllerProvider.notifier).create(name);
       } catch (_) {
-        if (context.mounted) showSnack(context, 'Could not create playlist');
+        if (context.mounted) showSnack(context, context.l10n.createPlaylistFailed);
       }
     }
 
@@ -113,7 +115,7 @@ class _PlaylistsTab extends ConsumerWidget {
               ),
               child: const Icon(Icons.add_rounded, color: Colors.white, size: 30),
             ),
-            title: const Text('New playlist', style: TextStyle(fontWeight: FontWeight.w700)),
+            title: Text(context.l10n.newPlaylist, style: const TextStyle(fontWeight: FontWeight.w700)),
             onTap: create,
           ),
           for (final p in list)
@@ -127,14 +129,14 @@ class _PlaylistsTab extends ConsumerWidget {
               ),
               title: Text(p.name, style: const TextStyle(fontWeight: FontWeight.w700)),
               subtitle: Text(
-                  '${songsLabel(p.trackCount)} • ${formatDuration(Duration(milliseconds: p.durationMs))}',
+                  '${context.l10n.songCount(p.trackCount)} • ${formatDuration(Duration(milliseconds: p.durationMs))}',
                   style: TextStyle(color: c.textMuted)),
               onTap: () => context.go('/library/playlist/${p.id}'),
             ),
         ],
       ),
       loading: () => const Center(child: CircularProgressIndicator(color: QodiTokens.orange)),
-      error: (e, _) => Center(child: Text('Could not load playlists\n$e', textAlign: TextAlign.center)),
+      error: (e, _) => Center(child: Text(context.l10n.playlistsLoadFailedDetail('$e'), textAlign: TextAlign.center)),
     );
   }
 }
@@ -146,14 +148,14 @@ class _FavoritesTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return ref.watch(favoritesControllerProvider).when(
           data: (list) => list.isEmpty
-              ? const Center(child: Text('No favorites yet'))
+              ? Center(child: Text(context.l10n.noFavoritesYet))
               : ListView.builder(
                   padding: const EdgeInsets.only(top: 8, bottom: 24),
                   itemCount: list.length,
                   itemBuilder: (_, i) => ConnectedTrackTile(track: list[i], queue: list, index: i),
                 ),
           loading: () => const Center(child: CircularProgressIndicator(color: QodiTokens.orange)),
-          error: (e, _) => Center(child: Text('Could not load favorites\n$e', textAlign: TextAlign.center)),
+          error: (e, _) => Center(child: Text(context.l10n.favoritesLoadFailedDetail('$e'), textAlign: TextAlign.center)),
         );
   }
 }

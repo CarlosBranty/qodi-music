@@ -82,14 +82,14 @@ class IoDeviceMusicPlatform implements DeviceMusicPlatform {
   }
 
   @override
-  Future<String?> pickFolder() => FilePicker.getDirectoryPath(dialogTitle: 'Choose a music folder');
+  Future<String?> pickFolder({String? dialogTitle}) => FilePicker.getDirectoryPath(dialogTitle: dialogTitle);
 
   @override
-  Future<int> importFiles() async {
+  Future<int> importFiles({String? dialogTitle}) async {
     // Custom extensions use the document picker (Files app); FileType.audio
     // would open the Apple Music library, whose items are not plain files.
     final files = await FilePicker.pickFiles(
-      dialogTitle: 'Import music',
+      dialogTitle: dialogTitle,
       type: FileType.custom,
       allowedExtensions: deviceAudioExtensions.toList(),
     );

@@ -3,6 +3,8 @@ import 'package:material_ui/material_ui.dart';
 import '../../core/theme/tokens.dart';
 import '../../features/library/domain/audio_quality.dart';
 import '../../features/library/domain/entities.dart';
+import '../../features/library/ui/quality_text.dart';
+import '../../l10n/l10n.dart';
 
 /// Compact quality label for track rows, e.g. `FLAC · 24/96`. Hi-Res files
 /// are tinted orange.
@@ -44,7 +46,7 @@ class NowPlayingQualityBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = QodiColors.of(context);
     final tier = transcodedOpusKbps == null ? qualityTier(track) : QualityTier.lossy;
-    final badge = qualityBadgeText(tier);
+    final badge = qualityBadgeText(context.l10n, tier);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -70,7 +72,7 @@ class NowPlayingQualityBadge extends StatelessWidget {
         ],
         Flexible(
           child: Text(
-            streamedQualityLabel(track, transcodedOpusKbps: transcodedOpusKbps),
+            streamedQualityLabel(context.l10n, track, transcodedOpusKbps: transcodedOpusKbps),
             key: const Key('np-quality'),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,

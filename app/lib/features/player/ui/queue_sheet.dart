@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../../core/theme/tokens.dart';
+import '../../../l10n/l10n.dart';
 import '../../../shared/widgets/track_tile.dart';
 import '../../downloads/ui/offline_status.dart';
 import 'player_providers.dart';
@@ -24,11 +25,11 @@ Future<void> showQueueSheet(BuildContext context) => showModalBottomSheet<void>(
                 child: Row(
                   children: [
                     Expanded(
-                      child: Text('Queue',
+                      child: Text(context.l10n.queue,
                           style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
                     ),
                     IconButton(
-                      tooltip: 'Shuffle',
+                      tooltip: context.l10n.shuffle,
                       onPressed: () => port.setShuffle(!(snap?.shuffle ?? false)),
                       icon: Icon(Icons.shuffle_rounded,
                           color: (snap?.shuffle ?? false) ? QodiTokens.orange : QodiColors.of(context).textMuted),

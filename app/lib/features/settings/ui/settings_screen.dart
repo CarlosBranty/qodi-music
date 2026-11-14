@@ -5,9 +5,9 @@ import 'package:material_ui/material_ui.dart';
 import '../../../core/config/core_providers.dart';
 import '../../../core/config/settings_store.dart';
 import '../../../core/theme/tokens.dart';
+import '../../../l10n/l10n.dart';
 import '../../../shared/format.dart';
 import '../../../shared/widgets/bento_card.dart';
-import '../../account/domain/account.dart';
 import '../../account/ui/account_providers.dart';
 import '../../account/ui/change_password_dialog.dart';
 import '../../auth/ui/auth_controller.dart';
@@ -18,7 +18,6 @@ import '../../equalizer/ui/equalizer_controller.dart';
 import '../../library/ui/library_providers.dart';
 import '../../library/ui/track_actions.dart';
 import '../../player/ui/player_providers.dart';
-import '../../update/domain/app_update.dart';
 import '../../update/ui/update_controller.dart';
 import '../../update/ui/update_dialogs.dart';
 import 'settings_controllers.dart';
@@ -43,12 +42,14 @@ class SettingsScreen extends ConsumerWidget {
     final equalizer = ref.watch(equalizerControllerProvider.select((s) => s.supported));
     final admin = ref.watch(isAdminProvider);
     final updates = ref.watch(updatesSupportedProvider);
+    final language = ref.watch(languagePreferenceProvider);
+    final l = context.l10n;
     Widget label(String t) => Padding(
           padding: const EdgeInsets.fromLTRB(8, 20, 8, 8),
           child: Text(t, style: TextStyle(color: c.textMuted, fontWeight: FontWeight.w700)),
         );
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(title: Text(l.settings)),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
         children: [
@@ -78,23 +79,27 @@ class SettingsScreen extends ConsumerWidget {
                             Text(session.serverUrl, style: TextStyle(color: c.textMuted, fontSize: 12)),
                           ]
                         : [
-                            const Text('Not connected', style: TextStyle(fontWeight: FontWeight.w800)),
-                            Text('Using music on this device only',
+                            Text(l.notConnected, style: const TextStyle(fontWeight: FontWeight.w800)),
+                            Text(l.usingDeviceOnly,
                                 style: TextStyle(color: c.textMuted, fontSize: 12)),
                           ],
                   ),
                 ),
                 if (!server)
-                  FilledButton(
-                    key: const Key('settings-connect-server'),
-                    onPressed: () => context.push('/login'),
-                    child: const Text('Connect to a server'),
+                  // Flexible: the label wraps instead of overflowing on
+                  // narrow phones (and with longer translations).
+                  Flexible(
+                    child: FilledButton(
+                      key: const Key('settings-connect-server'),
+                      onPressed: () => context.push('/login'),
+                      child: Text(l.connectToServer, textAlign: TextAlign.center),
+                    ),
                   ),
               ],
             ),
           ),
           if (server) ...[
-            label(AccountStrings.account),
+            label(l.account),
             BentoCard(
               padding: EdgeInsets.zero,
               child: Column(
@@ -102,11 +107,11 @@ class SettingsScreen extends ConsumerWidget {
                   ListTile(
                     key: const Key('settings-change-password'),
                     leading: const Icon(Icons.password_rounded, color: QodiTokens.orange),
-                    title: const Text(AccountStrings.changePassword),
+                    title: Text(l.changePassword),
                     trailing: const Icon(Icons.chevron_right_rounded),
                     onTap: () async {
                       if (await showChangePasswordDialog(context) && context.mounted) {
-                        showSnack(context, AccountStrings.passwordChanged);
+                        showSnack(context, l.passwordChanged);
                       }
                     },
                   ),
@@ -114,8 +119,8 @@ class SettingsScreen extends ConsumerWidget {
                     ListTile(
                       key: const Key('settings-users'),
                       leading: const Icon(Icons.group_rounded, color: QodiTokens.orange),
-                      title: const Text(AccountStrings.usersAndInvites),
-                      subtitle: const Text(AccountStrings.usersSubtitle),
+                      title: Text(l.usersAndInvites),
+                      subtitle: Text(l.usersSubtitle),
                       trailing: const Icon(Icons.chevron_right_rounded),
                       onTap: () => context.push('/settings/users'),
                     ),
@@ -123,31 +128,48 @@ class SettingsScreen extends ConsumerWidget {
               ),
             ),
           ],
-          label('Appearance'),
+          label(l.appearance),
           SegmentedButton<AppThemePreference>(
-            segments: const [
-              ButtonSegment(value: AppThemePreference.system, label: Text('System'), icon: Icon(Icons.brightness_auto_rounded)),
-              ButtonSegment(value: AppThemePreference.light, label: Text('Light'), icon: Icon(Icons.light_mode_rounded)),
-              ButtonSegment(value: AppThemePreference.dark, label: Text('Dark'), icon: Icon(Icons.dark_mode_rounded)),
+            segments: [
+              ButtonSegment(
+                  value: AppThemePreference.system,
+                  label: Text(l.themeSystem),
+                  icon: const Icon(Icons.brightness_auto_rounded)),
+              ButtonSegment(
+                  value: AppThemePreference.light, label: Text(l.themeLight), icon: const Icon(Icons.light_mode_rounded)),
+              ButtonSegment(
+                  value: AppThemePreference.dark, label: Text(l.themeDark), icon: const Icon(Icons.dark_mode_rounded)),
             ],
             selected: {theme},
             onSelectionChanged: (s) => ref.read(themePreferenceProvider.notifier).set(s.first),
           ),
+          label(l.language),
+          SegmentedButton<AppLanguage>(
+            key: const Key('settings-language'),
+            segments: [
+              ButtonSegment(
+                  value: AppLanguage.system, label: Text(l.languageSystem), icon: const Icon(Icons.language_rounded)),
+              ButtonSegment(value: AppLanguage.en, label: Text(l.languageEnglish)),
+              ButtonSegment(value: AppLanguage.es, label: Text(l.languageSpanish)),
+            ],
+            selected: {language},
+            onSelectionChanged: (s) => ref.read(languagePreferenceProvider.notifier).set(s.first),
+          ),
           if (equalizer) ...[
-            label('Playback'),
+            label(l.playback),
             BentoCard(
               padding: EdgeInsets.zero,
               child: ListTile(
                 key: const Key('settings-equalizer'),
                 leading: const Icon(Icons.equalizer_rounded, color: QodiTokens.orange),
-                title: const Text('Equalizer'),
-                subtitle: const Text('Presets and custom sound'),
+                title: Text(l.equalizer),
+                subtitle: Text(l.equalizerSubtitle),
                 trailing: const Icon(Icons.chevron_right_rounded),
                 onTap: () => context.push('/equalizer'),
               ),
             ),
           ],
-          if (server) label('Streaming quality'),
+          if (server) label(l.streamingQuality),
           if (server)
             BentoCard(
               padding: EdgeInsets.zero,
@@ -162,18 +184,24 @@ class SettingsScreen extends ConsumerWidget {
                       RadioListTile<StreamQuality>(
                         value: q,
                         activeColor: QodiTokens.orange,
-                        title: Text(q.label, style: const TextStyle(fontWeight: FontWeight.w700)),
-                        subtitle: Text(q.description),
+                        title: Text(switch (q) {
+                          StreamQuality.original => l.streamQualityOriginal,
+                          StreamQuality.opus128 => l.streamQualityOpus,
+                        }, style: const TextStyle(fontWeight: FontWeight.w700)),
+                        subtitle: Text(switch (q) {
+                          StreamQuality.original => l.streamQualityOriginalHint,
+                          StreamQuality.opus128 => l.streamQualityOpusHint,
+                        }),
                       ),
                   ],
                 ),
               ),
             ),
           if (device) ...[
-            label('Music on this device'),
+            label(l.musicOnThisDevice),
             const DeviceFoldersSettings(),
           ],
-          if (server) label('Server library'),
+          if (server) label(l.serverLibrary),
           if (server)
             BentoCard(
               padding: EdgeInsets.zero,
@@ -182,41 +210,41 @@ class SettingsScreen extends ConsumerWidget {
                   if (offline)
                     ListTile(
                       leading: const Icon(Icons.sync_rounded),
-                      title: const Text('Sync offline library'),
-                      subtitle: const Text('Download the latest library changes'),
+                      title: Text(l.syncOfflineLibrary),
+                      subtitle: Text(l.syncOfflineLibraryHint),
                       onTap: () async {
                         try {
                           final n = await ref.read(librarySyncProvider).sync();
-                          if (context.mounted) showSnack(context, 'Library synced ($n changes)');
+                          if (context.mounted) showSnack(context, l.librarySynced(n));
                         } catch (e) {
-                          if (context.mounted) showSnack(context, 'Sync failed');
+                          if (context.mounted) showSnack(context, l.syncFailed);
                         }
                       },
                     ),
                   ListTile(
                     leading: const Icon(Icons.radar_rounded),
-                    title: const Text('Rescan music folder'),
-                    subtitle: const Text('Ask the server to look for new songs'),
+                    title: Text(l.rescanMusicFolder),
+                    subtitle: Text(l.rescanMusicFolderHint),
                     onTap: () async {
                       try {
                         await ref.read(libraryApiProvider).scan();
-                        if (context.mounted) showSnack(context, 'Scan started');
+                        if (context.mounted) showSnack(context, l.scanStarted);
                       } catch (_) {
-                        if (context.mounted) showSnack(context, 'Could not start the scan');
+                        if (context.mounted) showSnack(context, l.scanFailed);
                       }
                     },
                   ),
                   if (offline)
                     ListTile(
                       leading: const Icon(Icons.download_done_rounded),
-                      title: const Text('Downloaded music'),
-                      subtitle: Text(formatBytes(ref.watch(_downloadBytesProvider).value ?? 0)),
+                      title: Text(l.downloadedMusic),
+                      subtitle: Text(formatBytes(ref.watch(_downloadBytesProvider).value ?? 0, locale: l.localeName)),
                     ),
                 ],
               ),
             ),
           if (updates) ...[
-            label(UpdateStrings.appUpdates),
+            label(l.appUpdates),
             const UpdateSettingsCard(),
           ],
           const SizedBox(height: 28),
@@ -228,7 +256,7 @@ class SettingsScreen extends ConsumerWidget {
                 await ref.read(authControllerProvider.notifier).logout();
               },
               icon: const Icon(Icons.logout_rounded),
-              label: const Text('Log out'),
+              label: Text(l.logOut),
             ),
         ],
       ),
@@ -244,7 +272,7 @@ class _AdminBadge extends StatelessWidget {
         key: const Key('settings-admin-badge'),
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         decoration: BoxDecoration(color: QodiTokens.orange, borderRadius: BorderRadius.circular(10)),
-        child: const Text(AccountStrings.admin,
-            style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800)),
+        child: Text(context.l10n.admin,
+            style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800)),
       );
 }

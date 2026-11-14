@@ -2,6 +2,7 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/theme/tokens.dart';
+import '../../l10n/l10n.dart';
 import 'vinyl_cover.dart';
 
 /// Empty state for server-only sections in device-only mode.
@@ -30,13 +31,13 @@ class ConnectServerHint extends StatelessWidget {
               key: const Key('connect-server'),
               onPressed: () => context.push('/login'),
               icon: const Icon(Icons.dns_rounded),
-              label: const Text('Connect to a server'),
+              label: Text(context.l10n.connectToServer),
             ),
             const SizedBox(height: 8),
             TextButton(
               onPressed: () => context.go('/library?tab=device'),
               style: TextButton.styleFrom(foregroundColor: QodiTokens.orange),
-              child: const Text('Browse music on this device'),
+              child: Text(context.l10n.browseDeviceMusic),
             ),
           ],
         ),

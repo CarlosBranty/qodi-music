@@ -1,0 +1,674 @@
+{
+  "@@locale": "en",
+  "appTitle": "Qodi Music",
+  "cancel": "Cancel",
+  "save": "Save",
+  "delete": "Delete",
+  "create": "Create",
+  "done": "Done",
+  "copy": "Copy",
+  "rename": "Rename",
+  "retry": "Retry",
+  "more": "More",
+  "close": "Close",
+  "search": "Search",
+  "openSettings": "Open settings",
+  "connectToServer": "Connect to a server",
+  "songCount": "{count, plural, =1{1 Song} other{{count} Songs}}",
+  "@songCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settings": "Settings",
+  "notConnected": "Not connected",
+  "usingDeviceOnly": "Using music on this device only",
+  "appearance": "Appearance",
+  "themeSystem": "System",
+  "themeLight": "Light",
+  "themeDark": "Dark",
+  "language": "Language",
+  "languageSystem": "System",
+  "languageEnglish": "English",
+  "languageSpanish": "Español",
+  "playback": "Playback",
+  "equalizerSubtitle": "Presets and custom sound",
+  "streamingQuality": "Streaming quality",
+  "streamQualityOriginal": "Original",
+  "streamQualityOriginalHint": "Lossless / source file",
+  "streamQualityOpus": "Opus 128 kbps",
+  "streamQualityOpusHint": "Saves data, transcoded on the server",
+  "musicOnThisDevice": "Music on this device",
+  "serverLibrary": "Server library",
+  "syncOfflineLibrary": "Sync offline library",
+  "syncOfflineLibraryHint": "Download the latest library changes",
+  "librarySynced": "{count, plural, =1{Library synced (1 change)} other{Library synced ({count} changes)}}",
+  "@librarySynced": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncFailed": "Sync failed",
+  "rescanMusicFolder": "Rescan music folder",
+  "rescanMusicFolderHint": "Ask the server to look for new songs",
+  "scanStarted": "Scan started",
+  "scanFailed": "Could not start the scan",
+  "downloadedMusic": "Downloaded music",
+  "logOut": "Log out",
+  "signInSubtitle": "Sign in to your music server",
+  "serverUrl": "Server URL",
+  "username": "Username",
+  "password": "Password",
+  "showPassword": "Show password",
+  "hidePassword": "Hide password",
+  "signIn": "Sign in",
+  "enterServerUrl": "Enter the server URL",
+  "serverUrlRule": "Use a full URL like http://192.168.1.10:4040",
+  "enterYourUsername": "Enter your username",
+  "enterYourPassword": "Enter your password",
+  "wrongCredentials": "Wrong username or password",
+  "loginFailed": "Login failed: {error}",
+  "@loginFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "useWithoutServer": "Use without server",
+  "useWithoutServerHint": "Play the music stored on this device. You can connect a server later in Settings.",
+  "errorForbidden": "You don't have permission to do that.",
+  "errorNetwork": "Cannot reach the server. Check the URL.",
+  "errorGeneric": "Something went wrong. Please try again.",
+  "enterUsername": "Enter a username",
+  "usernameRule": "Use 3–32 characters: letters, numbers, _ . -",
+  "enterPassword": "Enter a password",
+  "passwordRule": "Use 8–128 characters",
+  "passwordsDiffer": "The passwords do not match",
+  "enterInvite": "Enter your invite code",
+  "invalidInvite": "This invite code is not valid, expired or already used.",
+  "usernameTaken": "That username is already taken.",
+  "badRequest": "Check the username and password rules.",
+  "wrongCurrentPassword": "The current password is wrong.",
+  "haveInvite": "Have an invite? Create account",
+  "createAccount": "Create account",
+  "createAccountSubtitle": "Join a Qodi Music server with an invite",
+  "inviteCode": "Invite code",
+  "confirmPassword": "Confirm password",
+  "haveAccount": "Already have an account? Sign in",
+  "account": "Account",
+  "admin": "Admin",
+  "changePassword": "Change password",
+  "currentPassword": "Current password",
+  "newPassword": "New password",
+  "confirmNewPassword": "Confirm new password",
+  "passwordChanged": "Password changed",
+  "usersAndInvites": "Users & invites",
+  "usersSubtitle": "Manage who can listen",
+  "users": "Users",
+  "invites": "Invites",
+  "you": "You",
+  "deleteUser": "Delete user",
+  "cannotDeleteSelf": "You can't delete yourself",
+  "deleteUserQuestion": "Delete {name}? Their playlists, favorites and plays are removed and they are signed out.",
+  "@deleteUserQuestion": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "userDeleted": "{name} deleted",
+  "@userDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "createInvite": "Create invite",
+  "expiresInHours": "Expires in (hours)",
+  "maxUses": "Max uses",
+  "expiryRule": "Between 1 and 720 hours",
+  "usesRule": "Between 1 and 50",
+  "inviteCreated": "Invite created",
+  "shareInviteHint": "Send the join link. Android users can install the app from the APK link.",
+  "joinLink": "Join link",
+  "apkLink": "Android app (APK)",
+  "copyCode": "Copy code",
+  "copied": "Copied to the clipboard",
+  "revoke": "Revoke",
+  "revokeInvite": "Revoke invite",
+  "revokeInviteQuestion": "Revoke invite {code}? It can no longer be used.",
+  "@revokeInviteQuestion": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "inviteRevoked": "Invite revoked",
+  "noInvites": "No invites yet",
+  "statusActive": "Active",
+  "statusExpired": "Expired",
+  "statusUsedUp": "Used up",
+  "inviteUses": "Uses {used}/{max}",
+  "@inviteUses": {
+    "placeholders": {
+      "used": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "expiresOn": "Expires {date}",
+  "@expiresOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "expiredOn": "Expired {date}",
+  "@expiredOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "loadFailed": "Could not load. Pull to retry.",
+  "appUpdates": "App updates",
+  "checkForUpdates": "Check for updates",
+  "currentVersion": "Current version {version}",
+  "@currentVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "checking": "Checking…",
+  "neverChecked": "Not checked yet",
+  "upToDate": "You have the latest version",
+  "noPublishedUpdate": "No update published on the server",
+  "checkFailed": "Could not check for updates",
+  "updateNoServer": "Connect to a server to get updates",
+  "versionAvailable": "Version {version} is available",
+  "@versionAvailable": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "lastChecked": "{result} · checked {when}",
+  "@lastChecked": {
+    "placeholders": {
+      "result": {
+        "type": "String"
+      },
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "updateAvailable": "Update available",
+  "updateQuestion": "Update available (v{from} → v{to})",
+  "@updateQuestion": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "update": "Update",
+  "later": "Later",
+  "downloadingUpdate": "Downloading update…",
+  "checksumMismatch": "The download is corrupted (checksum mismatch). Please try again.",
+  "updateDownloadFailed": "The download failed. Check your connection and try again.",
+  "installPermission": "Allow Qodi Music to install apps to update it.",
+  "installFailed": "Could not open the installer.",
+  "equalizer": "Equalizer",
+  "reset": "Reset",
+  "equalizerHint": "Shape the sound with presets or your own curve",
+  "presets": "Presets",
+  "bands": "Bands",
+  "presetCustom": "Custom",
+  "equalizerUnavailableTitle": "Not available on this platform",
+  "equalizerUnavailableBody": "The equalizer works on Android. On this device the audio engine has no equalizer.",
+  "equalizerWaitingBands": "Play a song to load the equalizer bands of this device.",
+  "presetFlat": "Flat",
+  "presetBassBoost": "Bass boost",
+  "presetTrebleBoost": "Treble boost",
+  "presetVocal": "Vocal",
+  "presetRock": "Rock",
+  "presetPop": "Pop",
+  "presetElectronic": "Electronic",
+  "presetAcoustic": "Acoustic",
+  "availableOffline": "Available offline",
+  "downloaded": "Downloaded",
+  "someDownloaded": "{done} of {total} downloaded",
+  "@someDownloaded": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "downloadAll": "Download all",
+  "qualityHiRes": "Hi-Res",
+  "qualityLossless": "Lossless",
+  "trackInfo": "Track info",
+  "infoFormat": "Format",
+  "infoBitrate": "Bitrate",
+  "infoSampleRate": "Sample rate",
+  "infoBitDepth": "Bit depth",
+  "infoChannels": "Channels",
+  "infoSize": "Size",
+  "channelsMono": "Mono",
+  "channelsStereo": "Stereo",
+  "channelCount": "{count, plural, =1{1 channel} other{{count} channels}}",
+  "@channelCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "kbpsValue": "{value} kbps",
+  "@kbpsValue": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "kHzValue": "{value} kHz",
+  "@kHzValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "bitsValue": "{value}-bit",
+  "@bitsValue": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "transcodedFrom": "{streamed} · from {source}",
+  "@transcodedFrom": {
+    "placeholders": {
+      "streamed": {
+        "type": "String"
+      },
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "playNext": "Play next",
+  "playingNext": "Playing next: {title}",
+  "@playingNext": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "addToQueue": "Add to queue",
+  "addedToQueue": "Added to queue",
+  "addToPlaylist": "Add to playlist",
+  "removeDownload": "Remove download",
+  "download": "Download",
+  "goToAlbum": "Go to album · {album}",
+  "@goToAlbum": {
+    "placeholders": {
+      "album": {
+        "type": "String"
+      }
+    }
+  },
+  "goToArtist": "Go to artist · {artist}",
+  "@goToArtist": {
+    "placeholders": {
+      "artist": {
+        "type": "String"
+      }
+    }
+  },
+  "favoritesUpdateFailed": "Could not update favorites",
+  "addToFavorites": "Add to favorites",
+  "removeFromFavorites": "Remove from favorites",
+  "songs": "Songs",
+  "albums": "Albums",
+  "artists": "Artists",
+  "favorites": "Favorites",
+  "playlists": "Playlists",
+  "albumCount": "{count, plural, =1{1 album} other{{count} albums}}",
+  "@albumCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "songCountLower": "{count, plural, =1{1 song} other{{count} songs}}",
+  "@songCountLower": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "playAll": "Play all",
+  "shuffle": "Shuffle",
+  "clear": "Clear",
+  "deviceUpToDate": "Device music is up to date",
+  "deviceRescanResult": "Found {added} new, {removed} removed",
+  "@deviceRescanResult": {
+    "placeholders": {
+      "added": {
+        "type": "int"
+      },
+      "removed": {
+        "type": "int"
+      }
+    }
+  },
+  "deviceLoadFailed": "Could not load device music\n{error}",
+  "@deviceLoadFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "searchDeviceMusic": "Search device music",
+  "scanning": "Scanning…",
+  "songsOnDevice": "{count, plural, =1{1 Song on this device} other{{count} Songs on this device}}",
+  "@songsOnDevice": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "rescan": "Rescan",
+  "deviceFavoritesEmpty": "Tap the heart on a device song to keep it here.",
+  "noSongsFound": "No songs found",
+  "noAlbumsFound": "No albums found",
+  "noArtistsFound": "No artists found",
+  "newDevicePlaylist": "New device playlist",
+  "importSongsHint": "Import songs into the app to play them here.",
+  "noMusicInFolders": "No music found in {folders}.\nAdd a folder in Settings.",
+  "@noMusicInFolders": {
+    "placeholders": {
+      "folders": {
+        "type": "String"
+      }
+    }
+  },
+  "theScannedFolders": "the scanned folders",
+  "importSongs": "Import songs",
+  "addFolder": "Add folder",
+  "permissionPermanentlyDenied": "Qodi Music needs access to your music files.\nAllow it in the app settings.",
+  "permissionRationale": "Allow access to your music files to play the songs stored on this device.",
+  "allowAccess": "Allow access",
+  "folderPickerFailed": "Could not open the folder picker",
+  "importedSongs": "{count, plural, =1{Imported 1 song} other{Imported {count} songs}}",
+  "@importedSongs": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importFailed": "Import failed",
+  "album": "Album",
+  "artist": "Artist",
+  "playlist": "Playlist",
+  "albumGone": "This album is no longer on this device",
+  "artistGone": "This artist is no longer on this device",
+  "playlistGone": "This playlist is no longer on this device",
+  "renamePlaylist": "Rename playlist",
+  "deletePlaylistQuestion": "Delete playlist?",
+  "deleteDevicePlaylistBody": "\"{name}\" will be deleted. Songs stay on your device.",
+  "@deleteDevicePlaylistBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "removeFromPlaylist": "Remove from playlist",
+  "folderDefault": "Default",
+  "folderAddedByYou": "Added by you",
+  "folderNotFound": "not found",
+  "removeFolder": "Remove folder",
+  "importSongsHintSettings": "Copies audio files into the app",
+  "rescanDeviceMusic": "Rescan device music",
+  "songsFound": "{count, plural, =1{1 song found} other{{count} songs found}}",
+  "@songsFound": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "scanDone": "Scan done: {added} new, {removed} removed",
+  "@scanDone": {
+    "placeholders": {
+      "added": {
+        "type": "int"
+      },
+      "removed": {
+        "type": "int"
+      }
+    }
+  },
+  "addedToPlaylist": "Added to playlist",
+  "addedSongs": "{count, plural, =1{Added 1 song} other{Added {count} songs}}",
+  "@addedSongs": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "addToPlaylistFailed": "Could not add to playlist",
+  "listener": "Listener",
+  "welcomeBack": "Welcome back,",
+  "offlineModeGreeting": "Offline mode,",
+  "listenPrompt": "What do you want\nto listen today?",
+  "recentlyPlayed": "Recently played",
+  "viewAll": "View all",
+  "homePlaylistsHeader": "Playlist",
+  "noPlaylistsYetHome": "No playlists yet. Create one in Library.",
+  "noDevicePlaylistsYetHome": "No device playlists yet. Create one in Library.",
+  "playlistsLoadFailed": "Could not load playlists",
+  "favoritesEmptyHint": "Tap the heart on any song to keep it here.",
+  "favoritesLoadFailed": "Could not load favorites",
+  "loading": "Loading…",
+  "scanningYourMusic": "Scanning your music…",
+  "allowAccessShort": "Allow access to play your music files",
+  "onThisDevice": "On this device",
+  "minutesShort": "{minutes} min",
+  "@minutesShort": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "downloads": "Downloads",
+  "libraryNeedsServer": "Connect to a server in Settings to see your library.",
+  "yourLibrary": "Your Library",
+  "createPlaylistFailed": "Could not create playlist",
+  "newPlaylist": "New playlist",
+  "playlistsLoadFailedDetail": "Could not load playlists\n{error}",
+  "@playlistsLoadFailedDetail": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "noFavoritesYet": "No favorites yet",
+  "favoritesLoadFailedDetail": "Could not load favorites\n{error}",
+  "@favoritesLoadFailedDetail": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "play": "Play",
+  "downloadingSongs": "{count, plural, =1{Downloading 1 song} other{Downloading {count} songs}}",
+  "@downloadingSongs": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "albumLoadFailed": "Could not load album\n{error}",
+  "@albumLoadFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "artistLoadFailed": "Could not load artist\n{error}",
+  "@artistLoadFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "exploreServerTitle": "Explore your server",
+  "exploreServerMessage": "Browsing albums and artists of your music server needs a connection. Your device music is in Library.",
+  "browseMusic": "Browse Music",
+  "searchHint": "Search songs, artists, albums",
+  "somethingWentWrongDetail": "Something went wrong.\n{error}",
+  "@somethingWentWrongDetail": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryEmpty": "Your library is empty",
+  "playlistSaveFailed": "Could not save the playlist",
+  "renameFailed": "Could not rename",
+  "deletePlaylistBody": "\"{name}\" will be deleted. Songs stay in your library.",
+  "@deletePlaylistBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteFailed": "Could not delete",
+  "playlistOptions": "Playlist options",
+  "emptyPlaylistHint": "Empty playlist. Long-press any song and choose \"Add to playlist\".",
+  "playlistLoadFailed": "Could not load playlist\n{error}",
+  "@playlistLoadFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "playlistName": "Playlist name",
+  "downloadingCount": "{count, plural, =1{Downloading 1 song…} other{Downloading {count} songs…}}",
+  "@downloadingCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noDownloadsYet": "No downloads yet. Use \"Download\" on a song, album or playlist to listen offline.",
+  "downloadsLoadFailed": "Could not read downloads\n{error}",
+  "@downloadsLoadFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "back": "Back",
+  "nowPlaying": "Now Playing",
+  "queue": "Queue",
+  "moreActions": "More actions",
+  "nothingPlaying": "Nothing is playing",
+  "repeatOff": "Repeat: off",
+  "repeatAll": "Repeat: all",
+  "repeatOne": "Repeat: one",
+  "previous": "Previous",
+  "next": "Next",
+  "pause": "Pause",
+  "lyrics": "Lyrics",
+  "noLyrics": "No lyrics for this song",
+  "lyricsTitle": "Lyrics · {title}",
+  "@lyricsTitle": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "lyricsLoadFailed": "Could not load lyrics",
+  "seek": "Seek",
+  "navHome": "Home",
+  "navExplore": "Explore",
+  "navLibrary": "Library",
+  "navStats": "Stats",
+  "browseDeviceMusic": "Browse music on this device",
+  "statsServerTitle": "Stats live on your server",
+  "statsServerMessage": "Listening stats are computed by your music server. Connect one to see them.",
+  "yourStats": "Your Stats",
+  "statsLoadFailed": "Could not load stats\n{error}",
+  "@statsLoadFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "listeningTime": "Listening time",
+  "totalPlays": "Total plays",
+  "uniqueTracks": "Unique tracks",
+  "ofPlays": "of plays",
+  "noPlaysYet": "No plays yet",
+  "topArtist": "Top artist",
+  "daily": "Daily",
+  "minutesListened": "minutes listened",
+  "topTracks": "Top tracks",
+  "topTracksEmpty": "Play some music to see your top tracks.",
+  "range7Days": "7 days",
+  "range30Days": "30 days",
+  "rangeAllTime": "All time",
+  "chooseMusicFolder": "Choose a music folder",
+  "importMusic": "Import music",
+  "playbackChannelName": "Qodi Music playback"
+}

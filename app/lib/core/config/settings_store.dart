@@ -8,16 +8,21 @@ import '../../features/library/data/library_mappers.dart';
 import '../../features/library/domain/entities.dart';
 import '../api/json.dart';
 
-enum StreamQuality {
-  original('Original', 'Lossless / source file'),
-  opus128('Opus 128 kbps', 'Saves data, transcoded on the server');
-
-  const StreamQuality(this.label, this.description);
-  final String label;
-  final String description;
-}
+/// Labels are localized in Settings (`streamQualityOriginal`, ...).
+enum StreamQuality { original, opus128 }
 
 enum AppThemePreference { system, light, dark }
+
+/// UI language: [system] follows the device/browser locale (es* → Spanish,
+/// anything else → English).
+enum AppLanguage {
+  system(null),
+  en('en'),
+  es('es');
+
+  const AppLanguage(this.code);
+  final String? code;
+}
 
 /// Persists session and preferences in shared preferences.
 class SettingsStore {
@@ -30,6 +35,7 @@ class SettingsStore {
   static const _kUsername = 'username';
   static const _kIsAdmin = 'is_admin';
   static const _kTheme = 'theme';
+  static const _kLanguage = 'language';
   static const _kQuality = 'quality';
   static const _kHistory = 'history';
   static const _kDeviceOnly = 'device_only';
@@ -85,6 +91,10 @@ class SettingsStore {
   AppThemePreference get theme => AppThemePreference.values
       .firstWhere((e) => e.name == _prefs.getString(_kTheme), orElse: () => AppThemePreference.system);
   Future<void> setTheme(AppThemePreference v) => _prefs.setString(_kTheme, v.name);
+
+  AppLanguage get language => AppLanguage.values
+      .firstWhere((e) => e.name == _prefs.getString(_kLanguage), orElse: () => AppLanguage.system);
+  Future<void> setLanguage(AppLanguage v) => _prefs.setString(_kLanguage, v.name);
 
   StreamQuality get quality => StreamQuality.values
       .firstWhere((e) => e.name == _prefs.getString(_kQuality), orElse: () => StreamQuality.original);

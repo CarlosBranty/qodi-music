@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../../core/theme/tokens.dart';
+import '../../../l10n/l10n.dart';
 import '../../../shared/format.dart';
 import '../../../shared/widgets/cover_art.dart';
 import '../../library/domain/entities.dart';
@@ -15,14 +16,19 @@ import '../domain/device_music_source.dart';
 import 'device_music_providers.dart';
 
 enum DeviceFilter {
-  songs('Songs'),
-  albums('Albums'),
-  artists('Artists'),
-  favorites('Favorites'),
-  playlists('Playlists');
+  songs,
+  albums,
+  artists,
+  favorites,
+  playlists;
 
-  const DeviceFilter(this.label);
-  final String label;
+  String label(AppLocalizations l) => switch (this) {
+        songs => l.songs,
+        albums => l.albums,
+        artists => l.artists,
+        favorites => l.favorites,
+        playlists => l.playlists,
+      };
 }
 
 /// "On this device": songs / albums / artists / local favorites / local
@@ -51,16 +57,18 @@ class _DeviceMusicViewState extends ConsumerState<DeviceMusicView> {
     final report = await ref.read(deviceLibraryProvider.notifier).rescan();
     if (!mounted || report == null) return;
     final changes = report.added + report.updated + report.removed;
-    showSnack(context, changes == 0 ? 'Device music is up to date' : 'Found ${report.added} new, ${report.removed} removed');
+    final l = context.l10n;
+    showSnack(context, changes == 0 ? l.deviceUpToDate : l.deviceRescanResult(report.added, report.removed));
   }
 
   @override
   Widget build(BuildContext context) {
     final async = ref.watch(deviceLibraryProvider);
     final state = async.value;
+    final l = context.l10n;
     if (state == null) {
       return async.hasError
-          ? _Message(icon: Icons.error_outline_rounded, text: 'Could not load device music\n${async.error}')
+          ? _Message(icon: Icons.error_outline_rounded, text: l.deviceLoadFailed('${async.error}'))
           : const Center(child: CircularProgressIndicator(color: QodiTokens.orange));
     }
     // First visit on Android: ask for the permission once.
@@ -82,12 +90,12 @@ class _DeviceMusicViewState extends ConsumerState<DeviceMusicView> {
             onChanged: (v) => setState(() => _query = v.trim()),
             textInputAction: TextInputAction.search,
             decoration: InputDecoration(
-              hintText: 'Search device music',
+              hintText: l.searchDeviceMusic,
               prefixIcon: const Icon(Icons.search_rounded),
               suffixIcon: _query.isEmpty
                   ? null
                   : IconButton(
-                      tooltip: 'Clear',
+                      tooltip: l.clear,
                       icon: const Icon(Icons.close_rounded),
                       onPressed: () {
                         _search.clear();
@@ -106,7 +114,7 @@ class _DeviceMusicViewState extends ConsumerState<DeviceMusicView> {
             separatorBuilder: (_, _) => const SizedBox(width: 8),
             itemBuilder: (_, i) {
               final f = DeviceFilter.values[i];
-              return FilterPill(f.label, selected: _filter == f, onTap: () => setState(() => _filter = f));
+              return FilterPill(f.label(l), selected: _filter == f, onTap: () => setState(() => _filter = f));
             },
           ),
         ),
@@ -116,7 +124,7 @@ class _DeviceMusicViewState extends ConsumerState<DeviceMusicView> {
             children: [
               Expanded(
                 child: Text(
-                  state.scanning ? 'Scanning…' : '${songsLabel(state.tracks.length)} on this device',
+                  state.scanning ? l.scanning : l.songsOnDevice(state.tracks.length),
                   style: TextStyle(color: c.textMuted, fontWeight: FontWeight.w600),
                 ),
               ),
@@ -129,7 +137,7 @@ class _DeviceMusicViewState extends ConsumerState<DeviceMusicView> {
               else
                 IconButton(
                   key: const Key('device-rescan'),
-                  tooltip: 'Rescan',
+                  tooltip: l.rescan,
                   onPressed: _rescan,
                   icon: const Icon(Icons.refresh_rounded),
                 ),
@@ -146,8 +154,7 @@ class _DeviceMusicViewState extends ConsumerState<DeviceMusicView> {
               DeviceFilter.artists => _ArtistsList(_query),
               DeviceFilter.favorites => _SongsList(
                   searchTracks(ref.watch(deviceFavoriteTracksProvider), _query),
-                  empty: const _Message(
-                      icon: Icons.favorite_border_rounded, text: 'Tap the heart on a device song to keep it here.'),
+                  empty: _Message(icon: Icons.favorite_border_rounded, text: l.deviceFavoritesEmpty),
                 ),
               DeviceFilter.playlists => const _PlaylistsList(),
             },
@@ -158,7 +165,7 @@ class _DeviceMusicViewState extends ConsumerState<DeviceMusicView> {
   }
 
   Widget _emptyLibrary(DeviceLibraryState state) => _query.isNotEmpty
-      ? const _Message(icon: Icons.search_off_rounded, text: 'No songs found')
+      ? _Message(icon: Icons.search_off_rounded, text: context.l10n.noSongsFound)
       : const _NoMusicState();
 }
 
@@ -183,11 +190,11 @@ class _SongsList extends ConsumerWidget {
                   key: const Key('device-play-all'),
                   onPressed: () => ref.read(playerPortProvider).playTracks(tracks),
                   icon: const Icon(Icons.play_arrow_rounded),
-                  label: const Text('Play all'),
+                  label: Text(context.l10n.playAll),
                 ),
                 const SizedBox(width: 10),
                 IconButton.filledTonal(
-                  tooltip: 'Shuffle',
+                  tooltip: context.l10n.shuffle,
                   onPressed: () async {
                     final player = ref.read(playerPortProvider);
                     await player.setShuffle(true);
@@ -216,7 +223,7 @@ class _AlbumsGrid extends ConsumerWidget {
         .watch(deviceAlbumsProvider)
         .where((a) => q.isEmpty || a.title.toLowerCase().contains(q) || a.artist.toLowerCase().contains(q))
         .toList();
-    if (albums.isEmpty) return _scrollable(const _Message(icon: Icons.album_rounded, text: 'No albums found'));
+    if (albums.isEmpty) return _scrollable(_Message(icon: Icons.album_rounded, text: context.l10n.noAlbumsFound));
     return GridView.builder(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
       gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
@@ -241,7 +248,7 @@ class _ArtistsList extends ConsumerWidget {
     final q = query.toLowerCase();
     final artists =
         ref.watch(deviceArtistsProvider).where((a) => q.isEmpty || a.name.toLowerCase().contains(q)).toList();
-    if (artists.isEmpty) return _scrollable(const _Message(icon: Icons.person_rounded, text: 'No artists found'));
+    if (artists.isEmpty) return _scrollable(_Message(icon: Icons.person_rounded, text: context.l10n.noArtistsFound));
     return ListView.builder(
       padding: const EdgeInsets.only(bottom: 24, top: 4),
       itemCount: artists.length,
@@ -251,7 +258,8 @@ class _ArtistsList extends ConsumerWidget {
           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
           leading: CoverArt(seed: a.id, size: 48, circle: true, icon: Icons.person_rounded),
           title: Text(a.name, style: const TextStyle(fontWeight: FontWeight.w700)),
-          subtitle: Text('${a.albumCount} albums • ${a.trackCount} songs', style: TextStyle(color: c.textMuted)),
+          subtitle: Text('${context.l10n.albumCount(a.albumCount)} • ${context.l10n.songCountLower(a.trackCount)}',
+              style: TextStyle(color: c.textMuted)),
           onTap: () => context.go('/library/device/artist/${a.id}'),
         );
       },
@@ -288,7 +296,7 @@ class _PlaylistsList extends ConsumerWidget {
             ),
             child: const Icon(Icons.add_rounded, color: Colors.white, size: 30),
           ),
-          title: const Text('New device playlist', style: TextStyle(fontWeight: FontWeight.w700)),
+          title: Text(context.l10n.newDevicePlaylist, style: const TextStyle(fontWeight: FontWeight.w700)),
           onTap: create,
         ),
         for (final p in playlists)
@@ -304,7 +312,7 @@ class _PlaylistsList extends ConsumerWidget {
               ),
               title: Text(p.name, style: const TextStyle(fontWeight: FontWeight.w700)),
               subtitle: Text(
-                '${songsLabel(tracks.length)} • ${formatDuration(Duration(milliseconds: tracks.fold(0, (s, t) => s + t.durationMs)))}',
+                '${context.l10n.songCount(tracks.length)} • ${formatDuration(Duration(milliseconds: tracks.fold(0, (s, t) => s + t.durationMs)))}',
                 style: TextStyle(color: c.textMuted),
               ),
               onTap: () => context.go('/library/device/playlist/${p.id}'),
@@ -356,9 +364,10 @@ class _NoMusicState extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final platform = ref.watch(deviceMusicProvider)?.platform;
     final folders = ref.watch(deviceDefaultFoldersProvider).value ?? const [];
+    final l = context.l10n;
     final where = platform?.importsFiles ?? false
-        ? 'Import songs into the app to play them here.'
-        : 'No music found in ${folders.isEmpty ? 'the scanned folders' : folders.join(', ')}.\nAdd a folder in Settings.';
+        ? l.importSongsHint
+        : l.noMusicInFolders(folders.isEmpty ? l.theScannedFolders : folders.join(', '));
     return _Message(
       icon: Icons.library_music_rounded,
       text: where,
@@ -368,12 +377,12 @@ class _NoMusicState extends ConsumerWidget {
               ? FilledButton.icon(
                   onPressed: () => importDeviceFiles(context, ref),
                   icon: const Icon(Icons.file_upload_rounded),
-                  label: const Text('Import songs'),
+                  label: Text(l.importSongs),
                 )
               : FilledButton.icon(
                   onPressed: () => addDeviceFolder(context, ref),
                   icon: const Icon(Icons.create_new_folder_rounded),
-                  label: const Text('Add folder'),
+                  label: Text(l.addFolder),
                 ),
     );
   }
@@ -386,18 +395,17 @@ class _PermissionState extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final permanently = permission == DevicePermission.permanentlyDenied;
+    final l = context.l10n;
     return _Message(
       icon: Icons.lock_outline_rounded,
-      text: permanently
-          ? 'Qodi Music needs access to your music files.\nAllow it in the app settings.'
-          : 'Allow access to your music files to play the songs stored on this device.',
+      text: permanently ? l.permissionPermanentlyDenied : l.permissionRationale,
       action: FilledButton.icon(
         key: const Key('device-permission'),
         onPressed: () => permanently
             ? ref.read(deviceMusicProvider)?.platform.openPermissionSettings()
             : ref.read(deviceLibraryProvider.notifier).requestAccess(),
         icon: Icon(permanently ? Icons.settings_rounded : Icons.lock_open_rounded),
-        label: Text(permanently ? 'Open settings' : 'Allow access'),
+        label: Text(permanently ? l.openSettings : l.allowAccess),
       ),
     );
   }
@@ -409,9 +417,9 @@ Future<void> addDeviceFolder(BuildContext context, WidgetRef ref) async {
   if (platform == null) return;
   String? folder;
   try {
-    folder = await platform.pickFolder();
+    folder = await platform.pickFolder(dialogTitle: context.l10n.chooseMusicFolder);
   } catch (_) {
-    if (context.mounted) showSnack(context, 'Could not open the folder picker');
+    if (context.mounted) showSnack(context, context.l10n.folderPickerFailed);
     return;
   }
   if (folder == null) return;
@@ -424,10 +432,10 @@ Future<void> importDeviceFiles(BuildContext context, WidgetRef ref) async {
   final platform = ref.read(deviceMusicProvider)?.platform;
   if (platform == null) return;
   try {
-    final n = await platform.importFiles();
-    if (context.mounted) showSnack(context, n == 1 ? 'Imported 1 song' : 'Imported $n songs');
+    final n = await platform.importFiles(dialogTitle: context.l10n.importMusic);
+    if (context.mounted) showSnack(context, context.l10n.importedSongs(n));
     if (n > 0) await ref.read(deviceLibraryProvider.notifier).rescan();
   } catch (_) {
-    if (context.mounted) showSnack(context, 'Import failed');
+    if (context.mounted) showSnack(context, context.l10n.importFailed);
   }
 }

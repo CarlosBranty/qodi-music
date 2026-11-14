@@ -8,6 +8,7 @@ import 'package:qodi_music/features/equalizer/ui/equalizer_screen.dart';
 import 'package:qodi_music/features/settings/ui/settings_screen.dart';
 
 import '../support/fakes.dart';
+import '../support/l10n.dart';
 
 const _session = {'server_url': 'http://nas:4040', 'token': 'tok', 'username': 'sajra'};
 
@@ -22,7 +23,11 @@ Future<ProviderContainer> _pump(WidgetTester tester, Widget home, FakeEqualizer 
   addTearDown(container.dispose);
   await tester.pumpWidget(UncontrolledProviderScope(
     container: container,
-    child: MaterialApp(theme: AppTheme.light(useGoogleFonts: false), home: home),
+    child: MaterialApp(
+        locale: const Locale('en'),
+        localizationsDelegates: appLocalizationsDelegates,
+        supportedLocales: appSupportedLocales,
+        theme: AppTheme.light(useGoogleFonts: false), home: home),
   ));
   await tester.pump();
   return container;
@@ -32,7 +37,7 @@ void main() {
   testWidgets('unsupported platform: "not available" state and no Settings entry', (tester) async {
     final eq = FakeEqualizer(supported: false);
     await _pump(tester, const EqualizerScreen(), eq);
-    expect(find.text(EqualizerStrings.unavailableTitle), findsOneWidget);
+    expect(find.text(en.equalizerUnavailableTitle), findsOneWidget);
     expect(find.byType(Slider), findsNothing);
     expect(find.byKey(const Key('eq-enabled')), findsNothing);
 
@@ -43,7 +48,7 @@ void main() {
   testWidgets('supported: switch, presets and one slider per reported band', (tester) async {
     final eq = FakeEqualizer();
     final c = await _pump(tester, const EqualizerScreen(), eq);
-    expect(find.text(EqualizerStrings.waitingBands), findsOneWidget, reason: 'bands not reported yet');
+    expect(find.text(en.equalizerWaitingBands), findsOneWidget, reason: 'bands not reported yet');
 
     eq.reportBands(fiveBands);
     await tester.pump();

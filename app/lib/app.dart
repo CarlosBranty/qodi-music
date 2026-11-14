@@ -14,6 +14,7 @@ import 'features/library/ui/library_providers.dart';
 import 'features/stats/ui/stats_providers.dart';
 import 'core/config/core_providers.dart';
 import 'features/settings/ui/settings_controllers.dart';
+import 'l10n/l10n.dart';
 
 class QodiApp extends ConsumerStatefulWidget {
   const QodiApp({super.key});
@@ -74,8 +75,14 @@ class _QodiAppState extends ConsumerState<QodiApp> {
     ref.listen(equalizerControllerProvider, (_, _) {});
     final router = ref.watch(appRouterProvider);
     final pref = ref.watch(themePreferenceProvider);
+    final language = ref.watch(languagePreferenceProvider);
     return MaterialApp.router(
-      title: 'Qodi Music',
+      onGenerateTitle: (context) => context.l10n.appTitle,
+      // Null follows the device/browser locale (resolved by resolveAppLocale).
+      locale: language.locale,
+      supportedLocales: appSupportedLocales,
+      localizationsDelegates: appLocalizationsDelegates,
+      localeListResolutionCallback: (locales, _) => resolveAppLocale(locales),
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),

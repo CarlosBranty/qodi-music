@@ -1,0 +1,14 @@
+# Flutter gen-l10n. Synthetic package generation (package:flutter_gen) was
+# removed from Flutter, so the classes are generated into the source tree.
+arb-dir: lib/l10n
+template-arb-file: app_en.arb
+output-dir: lib/l10n/generated
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+nullable-getter: false
+required-resource-attributes: false
+# The generated `AppLocalizations.localizationsDelegates` list still points at
+# flutter_localizations' Material/Cupertino delegates, deprecated since the
+# move to package:material_ui. The app uses `appLocalizationsDelegates`
+# (lib/l10n/l10n.dart) instead, so the deprecation is silenced here.
+header: "// ignore_for_file: deprecated_member_use"

@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../../core/config/settings_store.dart';
 import '../../../core/theme/tokens.dart';
+import '../../../l10n/l10n.dart';
 import '../../../shared/format.dart';
 import '../../../shared/widgets/arc_waveform_seekbar.dart';
 import '../../../shared/widgets/cover_art.dart';
@@ -34,6 +35,7 @@ class NowPlayingScreen extends ConsumerWidget {
     final track = snap.current;
     final c = QodiColors.of(context);
     final equalizer = ref.watch(equalizerControllerProvider.select((s) => s.supported));
+    final l = context.l10n;
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -43,17 +45,17 @@ class NowPlayingScreen extends ConsumerWidget {
               child: Row(
                 children: [
                   IconButton(
-                    tooltip: 'Back',
+                    tooltip: l.back,
                     icon: const Icon(Icons.arrow_back_rounded),
                     onPressed: () => context.canPop() ? context.pop() : context.go('/home'),
                   ),
                   Expanded(
-                    child: Text('Now Playing',
+                    child: Text(l.nowPlaying,
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
                   ),
                   PopupMenuButton<String>(
-                    tooltip: 'More',
+                    tooltip: l.more,
                     icon: const Icon(Icons.more_horiz_rounded),
                     enabled: track != null,
                     onSelected: (v) {
@@ -72,10 +74,10 @@ class NowPlayingScreen extends ConsumerWidget {
                       }
                     },
                     itemBuilder: (_) => [
-                      const PopupMenuItem(value: 'queue', child: Text('Queue')),
-                      const PopupMenuItem(value: 'playlist', child: Text('Add to playlist')),
-                      if (equalizer) const PopupMenuItem(value: 'equalizer', child: Text('Equalizer')),
-                      const PopupMenuItem(value: 'more', child: Text('More actions')),
+                      PopupMenuItem(value: 'queue', child: Text(l.queue)),
+                      PopupMenuItem(value: 'playlist', child: Text(l.addToPlaylist)),
+                      if (equalizer) PopupMenuItem(value: 'equalizer', child: Text(l.equalizer)),
+                      PopupMenuItem(value: 'more', child: Text(l.moreActions)),
                     ],
                   ),
                 ],
@@ -84,7 +86,7 @@ class NowPlayingScreen extends ConsumerWidget {
             if (track == null)
               Expanded(
                 child: Center(
-                  child: Text('Nothing is playing', style: TextStyle(color: c.textMuted)),
+                  child: Text(l.nothingPlaying, style: TextStyle(color: c.textMuted)),
                 ),
               )
             else ...[
@@ -275,19 +277,24 @@ class _Controls extends ConsumerWidget {
     final c = QodiColors.of(context);
     final fav = watchIsFavorite(ref, track);
     final repeat = snapshot.repeat;
+    final l = context.l10n;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            tooltip: 'Repeat: ${repeat.name}',
+            tooltip: switch (repeat) {
+              QueueRepeat.off => l.repeatOff,
+              QueueRepeat.all => l.repeatAll,
+              QueueRepeat.one => l.repeatOne,
+            },
             onPressed: () => port.setRepeat(QueueRepeat.values[(repeat.index + 1) % QueueRepeat.values.length]),
             icon: Icon(repeat == QueueRepeat.one ? Icons.repeat_one_rounded : Icons.repeat_rounded,
                 color: repeat == QueueRepeat.off ? c.textMuted : QodiTokens.orange),
           ),
           IconButton(
-            tooltip: 'Previous',
+            tooltip: l.previous,
             iconSize: 34,
             onPressed: port.previous,
             icon: Icon(Icons.skip_previous_rounded, color: c.text),
@@ -306,7 +313,7 @@ class _Controls extends ConsumerWidget {
                 onTap: port.togglePlay,
                 child: Semantics(
                   button: true,
-                  label: snapshot.playing ? 'Pause' : 'Play',
+                  label: snapshot.playing ? l.pause : l.play,
                   child: Icon(
                     snapshot.playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
                     color: Colors.white,
@@ -317,16 +324,16 @@ class _Controls extends ConsumerWidget {
             ),
           ),
           IconButton(
-            tooltip: 'Next',
+            tooltip: l.next,
             iconSize: 34,
             onPressed: port.next,
             icon: Icon(Icons.skip_next_rounded, color: c.text),
           ),
           IconButton(
             key: const Key('np-favorite'),
-            tooltip: fav ? 'Remove from favorites' : 'Add to favorites',
+            tooltip: fav ? l.removeFromFavorites : l.addToFavorites,
             onPressed: () => toggleTrackFavorite(ref, track).catchError((Object _) {
-              if (context.mounted) showSnack(context, 'Could not update favorites');
+              if (context.mounted) showSnack(context, l.favoritesUpdateFailed);
             }),
             icon: Icon(fav ? Icons.favorite_rounded : Icons.favorite_border_rounded, color: QodiTokens.orange),
           ),
@@ -354,7 +361,7 @@ class _LyricsHandle extends StatelessWidget {
         child: Column(
           children: [
             Icon(Icons.keyboard_arrow_up_rounded, color: c.textMuted),
-            Text('Lyrics', style: TextStyle(color: c.textMuted, fontWeight: FontWeight.w600)),
+            Text(context.l10n.lyrics, style: TextStyle(color: c.textMuted, fontWeight: FontWeight.w600)),
           ],
         ),
       ),

@@ -1,13 +1,13 @@
 import '../../library/domain/entities.dart';
 
+/// Labels are localized in the Stats screen (`statsRangeLabel`).
 enum StatsRange {
-  week('7d', '7 days'),
-  month('30d', '30 days'),
-  all('all', 'All time');
+  week('7d'),
+  month('30d'),
+  all('all');
 
-  const StatsRange(this.apiValue, this.label);
+  const StatsRange(this.apiValue);
   final String apiValue;
-  final String label;
 }
 
 class TopTrack {

@@ -2,31 +2,6 @@
 /// checksum rules. Pure Dart (no Flutter, no IO).
 library;
 
-/// User-facing copy of the update UI (kept together for translation).
-abstract final class UpdateStrings {
-  static const appUpdates = 'App updates';
-  static const checkForUpdates = 'Check for updates';
-  static String currentVersion(String version) => 'Current version $version';
-  static const checking = 'Checking…';
-  static const neverChecked = 'Not checked yet';
-  static const upToDate = 'You have the latest version';
-  static const noPublished = 'No update published on the server';
-  static const checkFailed = 'Could not check for updates';
-  static const noServer = 'Connect to a server to get updates';
-  static String available(String version) => 'Version $version is available';
-  static String lastChecked(String when, String result) => '$result · checked $when';
-  static const updateAvailable = 'Update available';
-  static String updateQuestion(String from, String to) => 'Update available (v$from → v$to)';
-  static const update = 'Update';
-  static const later = 'Later';
-  static const downloading = 'Downloading update…';
-  static const checksumMismatch = 'The download is corrupted (checksum mismatch). Please try again.';
-  static const downloadFailed = 'The download failed. Check your connection and try again.';
-  static const installPermission = 'Allow Qodi Music to install apps to update it.';
-  static const openSettings = 'Open settings';
-  static const installFailed = 'Could not open the installer.';
-}
-
 /// `GET /app/android`.
 class AndroidRelease {
   const AndroidRelease({
@@ -108,10 +83,19 @@ bool sha256Matches(String actualHex, String expectedHex) {
 /// Self-update exists only in the Android app (not web/desktop/iOS).
 bool updatesSupportedOn({required bool isWeb, required bool isAndroid}) => !isWeb && isAndroid;
 
-/// Short text of a check result for Settings.
-String describeResult(UpdateCheckResult r) => switch (r) {
-      UpdateAvailable(:final release) => UpdateStrings.available(release.versionName),
-      UpToDate() => UpdateStrings.upToDate,
-      NoPublishedUpdate() => UpdateStrings.noPublished,
-      UpdateCheckFailed() => UpdateStrings.checkFailed,
+/// Persisted, language-independent summary of the last check; Settings
+/// turns it into text in the active language.
+abstract final class UpdateResultCode {
+  static const upToDate = 'up_to_date';
+  static const noPublished = 'no_published';
+  static const failed = 'failed';
+  static const noServer = 'no_server';
+  static const availablePrefix = 'available:';
+}
+
+String resultCode(UpdateCheckResult r) => switch (r) {
+      UpdateAvailable(:final release) => '${UpdateResultCode.availablePrefix}${release.versionName}',
+      UpToDate() => UpdateResultCode.upToDate,
+      NoPublishedUpdate() => UpdateResultCode.noPublished,
+      UpdateCheckFailed() => UpdateResultCode.failed,
     };

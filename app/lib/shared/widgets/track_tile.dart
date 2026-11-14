@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../core/theme/tokens.dart';
 import '../../features/library/domain/entities.dart';
+import '../../l10n/l10n.dart';
 import 'cover_art.dart';
 import 'quality_badge.dart';
 
@@ -92,7 +93,7 @@ class TrackTile extends StatelessWidget {
             ?trailing,
             if (favorite != null)
               IconButton(
-                tooltip: favorite! ? 'Remove from favorites' : 'Add to favorites',
+                tooltip: favorite! ? context.l10n.removeFromFavorites : context.l10n.addToFavorites,
                 onPressed: onFavorite,
                 icon: Icon(
                   favorite! ? Icons.favorite_rounded : Icons.favorite_border_rounded,
@@ -101,7 +102,7 @@ class TrackTile extends StatelessWidget {
               ),
             if (onMore != null)
               IconButton(
-                tooltip: 'More',
+                tooltip: context.l10n.more,
                 onPressed: onMore,
                 icon: Icon(Icons.more_vert_rounded, color: c.textMuted),
               ),

@@ -4,3 +4,6 @@ server/target/
 app/build/
 app/.dart_tool/
 /dist/android/
+
+# Internal development log (kept locally, not published)
+/odd/

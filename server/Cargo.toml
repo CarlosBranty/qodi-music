@@ -2,6 +2,10 @@
 name = "qodi-server"
 version = "0.1.0"
 edition = "2024"
+description = "Self-hosted music streaming server for Qodi Music"
+license = "MIT"
+repository = "https://github.com/cbranty/qodi-music"
+publish = false
 
 [dependencies]
 anyhow = "1.0.104"

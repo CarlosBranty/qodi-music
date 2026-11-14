@@ -46,3 +46,4 @@ Branch: `feat/qodi-music-v1` · Delivery: ask-on-risk · Runners: `cargo test` (
 - L9 (2026-11-14) "tambien que se muestre que calidad tiene cada cancion, y se puede registrar mas usuarios? deberia si alguien quiere unirse a escuchar" → verified: no registration endpoint; quality only format+bitrate. Contract extended (docs/api.md).
 - L10 (2026-11-14) User chose option A: keystore stored as GitHub secrets (ANDROID_KEYSTORE_BASE64/PASSWORD/KEY_ALIAS).
 - L11 T11: upgrade from 1f7bdf4 and 36672c3 DBs verified lossless; fixed advisories: invite pre-check before argon2, case-insensitive revoke. Open: password change does not revoke tokens; bootstrap exact-case match.
+- L12 (2026-11-14) Production live at music.branty.lat; full CI/CD green (run 7): tests, signed APK v7, GHCR image, Dokploy webhook deploy. Push events still do not trigger Actions; runs dispatched manually.

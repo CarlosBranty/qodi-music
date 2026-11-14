@@ -27,10 +27,10 @@ Branch: `feat/qodi-music-v1` · Delivery: ask-on-risk · Runners: `cargo test` (
 | T5 | S6 | delegated (context backstop: unfamiliar 12k-line app/; reading prepares the write) | done — analyze clean, 74 tests, linux+web builds, Linux smoke scanned 3 FLAC | a925f62 |
 | T6 | S7, S8 | delegated (context backstop; player + UI of the 14k-line app) | done — 102 tests, web/linux/apk builds; EQ Android-only | 3db2330 |
 | T9 | S11, S12 (server) | delegated (writer trigger a: parallel with T6, disjoint `server/**`) | done — 36 tests, clippy clean; also S10 endpoints | 8847303 |
-| T10 | S11, S12 (app) + in-app logo | delegated after T6 | pending | |
+| T10 | S10 (app), S11, S12 (app) + in-app logo | delegated after T6 | done — 170 tests, web/linux/apk builds | fe44887 |
 | T11 | S12 | independent verifier — Risk items 1, 2 | done — 0 blockers, 6 advisories (2 fixed) | HEAD |
-| T7 | S9 | delegated after T6 (touches every UI string) | pending | |
-| T8 | S10 | CI inline (272cfc0); server endpoint in T9; app part in T10 | in progress | |
+| T7 | S9 | delegated after T10 (touches every UI string) | in progress | |
+| T8 | S10 | CI inline (272cfc0); server endpoint in T9; app part in T10 | done — pending real-device install test | 272cfc0 |
 | T4 | S2 | independent verifier — Risk item 2 (auth/token handling) | done — 0 blockers, 6 advisories (2 fixed) | see HEAD |
 
 ## Log

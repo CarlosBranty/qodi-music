@@ -199,6 +199,7 @@ String? findSidecarLyrics(String audioPath) {
       genre: m.genres.firstOrNull,
       durationMs: m.duration?.inMilliseconds,
       bitrateKbps: bitrate == null ? null : (bitrate >= 10000 ? bitrate ~/ 1000 : bitrate),
+      sampleRateHz: m.sampleRate,
     ),
     cover: front?.bytes,
   );

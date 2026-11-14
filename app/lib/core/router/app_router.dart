@@ -1,8 +1,13 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../features/account/domain/account.dart';
+import '../../features/account/ui/register_screen.dart';
+import '../../features/account/ui/users_screen.dart';
 import '../../features/auth/ui/auth_controller.dart';
+import '../config/core_providers.dart';
 import '../../features/auth/ui/login_screen.dart';
 import '../../features/device_music/ui/device_detail_screens.dart';
 import '../../features/home/ui/home_screen.dart';
@@ -24,12 +29,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   ref.onDispose(refresh.dispose);
 
   final router = GoRouter(
-    initialLocation: '/home',
+    initialLocation: initialLocationFor(kIsWeb ? Uri.base : null),
     refreshListenable: refresh,
     redirect: (context, state) {
       final loggedIn = ref.read(authControllerProvider) != null;
       final deviceOnly = ref.read(deviceOnlyProvider);
-      final atLogin = state.matchedLocation == '/login';
+      // Sign-in pages: login, invite sign-up and invite deep links.
+      final atLogin = const {'/login', '/register', '/join'}.contains(state.matchedLocation);
       if (!loggedIn && !deviceOnly) return atLogin ? null : '/login';
       // Device-only users may open /login to connect to a server.
       if (atLogin && loggedIn) return '/home';
@@ -37,8 +43,22 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     },
     routes: [
       GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
+      GoRoute(
+        path: '/register',
+        builder: (_, _) => RegisterScreen(initialServer: _savedOrPageServer(ref)),
+      ),
+      // Invite link `<server>/join?code=XXXX`: on web the page origin is the server.
+      GoRoute(
+        path: '/join',
+        builder: (_, s) {
+          final prefill = joinPrefill(kIsWeb ? Uri.base.replace(query: s.uri.query) : s.uri,
+              isWeb: kIsWeb, savedServer: ref.read(settingsStoreProvider).serverUrl);
+          return RegisterScreen(initialServer: prefill.server, initialCode: prefill.code);
+        },
+      ),
       GoRoute(path: '/now-playing', builder: (_, _) => const NowPlayingScreen()),
       GoRoute(path: '/settings', builder: (_, _) => const SettingsScreen()),
+      GoRoute(path: '/settings/users', builder: (_, _) => const UsersScreen()),
       GoRoute(path: '/equalizer', builder: (_, _) => const EqualizerScreen()),
       StatefulShellRoute.indexedStack(
         builder: (context, state, shell) => AppShell(shell: shell),
@@ -96,6 +116,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   ref.onDispose(router.dispose);
   return router;
 });
+
+/// `/home`, or `/join?code=…` when the web app was opened from an invite link
+/// (`<server>/join?code=XXXX`; the server serves the SPA for that path).
+String initialLocationFor(Uri? pageUrl) {
+  if (pageUrl != null && pageUrl.path == '/join') {
+    return Uri(path: '/join', queryParameters: pageUrl.queryParameters.isEmpty ? null : pageUrl.queryParameters)
+        .toString();
+  }
+  return '/home';
+}
+
+String _savedOrPageServer(Ref ref) =>
+    ref.read(settingsStoreProvider).serverUrl ?? (kIsWeb ? Uri.base.origin : '');
 
 /// Tab scaffold: content, mini player and the black pill nav bar.
 class AppShell extends StatelessWidget {

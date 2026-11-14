@@ -7,6 +7,8 @@ import '../../../core/api/api_error.dart';
 import '../../../core/config/core_providers.dart';
 import '../../../core/theme/tokens.dart';
 import '../../../shared/widgets/vinyl_cover.dart';
+import '../../../shared/widgets/wordmark.dart';
+import '../../account/domain/account.dart';
 import '../../device_music/ui/device_music_providers.dart';
 import 'auth_controller.dart';
 
@@ -95,12 +97,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Center(child: VinylCover(seed: 'qodi', size: 120, spinning: true)),
+                    const Center(child: VinylCover(seed: 'qodi', size: 104, spinning: true)),
                     const SizedBox(height: 24),
-                    Text('Qodi Music',
-                        textAlign: TextAlign.center,
-                        style: text.headlineMedium?.copyWith(fontWeight: FontWeight.w800)),
-                    const SizedBox(height: 6),
+                    const Center(child: QodiWordmark(height: 40)),
+                    const SizedBox(height: 10),
                     Text('Sign in to your music server',
                         textAlign: TextAlign.center,
                         style: text.bodyMedium?.copyWith(color: c.textMuted)),
@@ -160,6 +160,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               dimension: 22,
                               child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
                           : const Text('Sign in'),
+                    ),
+                    const SizedBox(height: 4),
+                    TextButton(
+                      key: const Key('login-register'),
+                      onPressed: _busy ? null : () => context.push('/register'),
+                      child: const Text(AccountStrings.haveInvite),
                     ),
                     if (deviceMusic) ...[
                       const SizedBox(height: 12),

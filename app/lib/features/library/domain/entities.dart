@@ -20,6 +20,10 @@ class Track {
     this.year,
     this.genre,
     this.bitrateKbps,
+    this.sampleRateHz,
+    this.bitDepth,
+    this.channels,
+    this.lossless = false,
   });
 
   final String id;
@@ -36,6 +40,13 @@ class Track {
   final int durationMs;
   final String format;
   final int? bitrateKbps;
+
+  /// Audio properties (null when unknown, e.g. older servers; [bitDepth] is
+  /// null for lossy codecs).
+  final int? sampleRateHz;
+  final int? bitDepth;
+  final int? channels;
+  final bool lossless;
   final int sizeBytes;
   final bool hasCover;
   final bool hasLyrics;
@@ -59,6 +70,10 @@ class Track {
         durationMs: durationMs,
         format: format,
         bitrateKbps: bitrateKbps,
+        sampleRateHz: sampleRateHz,
+        bitDepth: bitDepth,
+        channels: channels,
+        lossless: lossless,
         sizeBytes: sizeBytes,
         hasCover: hasCover,
         hasLyrics: hasLyrics,

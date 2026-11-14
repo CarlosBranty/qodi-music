@@ -4,7 +4,11 @@ import 'package:material_ui/material_ui.dart';
 import 'core/config/settings_store.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
+import 'features/account/ui/account_providers.dart';
 import 'features/auth/ui/auth_controller.dart';
+import 'features/update/domain/app_update.dart';
+import 'features/update/ui/update_controller.dart';
+import 'features/update/ui/update_dialogs.dart';
 import 'features/equalizer/ui/equalizer_controller.dart';
 import 'features/library/ui/library_providers.dart';
 import 'features/stats/ui/stats_providers.dart';
@@ -25,7 +29,18 @@ class _QodiAppState extends ConsumerState<QodiApp> {
   void initState() {
     super.initState();
     _lifecycle = AppLifecycleListener(onResume: _backgroundSync);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _backgroundSync());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _backgroundSync();
+      _autoUpdateCheck();
+    });
+  }
+
+  /// Android: at most once per 6 h, never blocking start-up.
+  Future<void> _autoUpdateCheck() async {
+    final result = await ref.read(updateControllerProvider.notifier).check(auto: true);
+    if (result is! UpdateAvailable || !mounted) return;
+    final navigator = ref.read(appRouterProvider).routerDelegate.navigatorKey.currentContext;
+    if (navigator != null && navigator.mounted) await showUpdateAvailableDialog(navigator, ref, result);
   }
 
   @override
@@ -37,6 +52,8 @@ class _QodiAppState extends ConsumerState<QodiApp> {
   /// Flushes queued plays and (native) syncs the offline library cache.
   Future<void> _backgroundSync() async {
     if (ref.read(authControllerProvider) == null) return;
+    // Refreshes `is_admin` (sessions saved by older versions lack it).
+    ref.read(authControllerProvider.notifier).refreshUser(ref.read(accountApiProvider).me);
     await ref.read(playsReporterProvider).flush();
     if (ref.read(platformServicesProvider).supportsOffline) {
       try {

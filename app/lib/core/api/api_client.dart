@@ -127,6 +127,7 @@ class ApiClient {
           ? InvalidCredentialsException(message)
           : UnauthorizedException(message);
     }
+    if (status == 403) return ForbiddenException(message);
     return ApiException(code, message, statusCode: status);
   }
 }

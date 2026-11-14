@@ -28,3 +28,26 @@ class InvalidCredentialsException extends ApiException {
   const InvalidCredentialsException([String message = 'Invalid credentials'])
       : super('invalid_credentials', message, statusCode: 401);
 }
+
+/// 403 `forbidden`: the user is signed in but not allowed (e.g. a non-admin
+/// calling `/admin/*`).
+class ForbiddenException extends ApiException {
+  const ForbiddenException([String message = 'Forbidden']) : super('forbidden', message, statusCode: 403);
+}
+
+/// User-facing copy of the common API errors (kept together for translation).
+abstract final class ApiErrorStrings {
+  static const forbidden = "You don't have permission to do that.";
+  static const network = 'Cannot reach the server. Check the URL.';
+  static const generic = 'Something went wrong. Please try again.';
+}
+
+/// A friendly message for any error thrown by the API layer.
+String friendlyApiError(Object error) {
+  if (error is ForbiddenException) return ApiErrorStrings.forbidden;
+  if (error is ApiException) {
+    if (error.isNetwork) return ApiErrorStrings.network;
+    return error.message.isEmpty ? ApiErrorStrings.generic : error.message;
+  }
+  return ApiErrorStrings.generic;
+}

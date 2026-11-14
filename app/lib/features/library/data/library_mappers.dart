@@ -1,4 +1,5 @@
 import '../../../core/api/json.dart';
+import '../domain/audio_quality.dart';
 import '../domain/entities.dart';
 
 Track trackFromJson(Json j) => Track(
@@ -16,6 +17,11 @@ Track trackFromJson(Json j) => Track(
       durationMs: asInt(j['duration_ms']),
       format: asString(j['format']),
       bitrateKbps: asIntOrNull(j['bitrate_kbps']),
+      sampleRateHz: asIntOrNull(j['sample_rate_hz']),
+      bitDepth: asIntOrNull(j['bit_depth']),
+      channels: asIntOrNull(j['channels']),
+      // Older servers omit `lossless`: derive it from the format.
+      lossless: asBool(j['lossless'], isLosslessFormat(asString(j['format']))),
       sizeBytes: asInt(j['size_bytes']),
       hasCover: asBool(j['has_cover']),
       hasLyrics: asBool(j['has_lyrics']),
@@ -38,6 +44,10 @@ Json trackToJson(Track t) => {
       'duration_ms': t.durationMs,
       'format': t.format,
       'bitrate_kbps': t.bitrateKbps,
+      'sample_rate_hz': t.sampleRateHz,
+      'bit_depth': t.bitDepth,
+      'channels': t.channels,
+      'lossless': t.lossless,
       'size_bytes': t.sizeBytes,
       'has_cover': t.hasCover,
       'has_lyrics': t.hasLyrics,

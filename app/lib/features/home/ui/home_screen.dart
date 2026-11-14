@@ -7,6 +7,7 @@ import '../../../shared/format.dart';
 import '../../../shared/widgets/cover_art.dart';
 import '../../../shared/widgets/section_header.dart';
 import '../../../shared/widgets/vinyl_cover.dart';
+import '../../../shared/widgets/wordmark.dart';
 import '../../auth/ui/auth_controller.dart';
 import '../../device_music/domain/device_music_source.dart';
 import '../../device_music/domain/device_track.dart';
@@ -83,6 +84,7 @@ class HomeScreen extends ConsumerWidget {
                     ],
                   ),
                 ),
+                const QodiWordmark(height: 22),
                 IconButton(
                   tooltip: 'Settings',
                   onPressed: () => context.push('/settings'),

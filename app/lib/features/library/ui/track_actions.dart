@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../../core/theme/tokens.dart';
+import '../../../shared/format.dart';
 import '../../../shared/widgets/track_tile.dart';
 import '../../downloads/ui/downloads_controller.dart';
 import '../../downloads/ui/offline_status.dart';
@@ -11,6 +12,7 @@ import '../../device_music/ui/device_playlist_picker.dart';
 import '../../favorites/ui/track_favorite.dart';
 import '../../player/ui/player_providers.dart';
 import '../../playlists/ui/playlist_picker.dart';
+import '../domain/audio_quality.dart';
 import '../domain/entities.dart';
 
 void showSnack(BuildContext context, String message) {
@@ -29,68 +31,123 @@ Future<void> showTrackActions(BuildContext context, WidgetRef ref, Track track) 
       final downloaded = ref.read(downloadsControllerProvider).isDownloaded(track.id);
       void close() => Navigator.of(sheet).pop();
       return SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TrackTile(track: track),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.queue_play_next_rounded),
-              title: const Text('Play next'),
-              onTap: () {
-                close();
-                ref.read(playerPortProvider).playNext(track);
-                showSnack(context, 'Playing next: ${track.title}');
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.queue_music_rounded),
-              title: const Text('Add to queue'),
-              onTap: () {
-                close();
-                ref.read(playerPortProvider).enqueue(track);
-                showSnack(context, 'Added to queue');
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.playlist_add_rounded),
-              title: const Text('Add to playlist'),
-              onTap: () {
-                close();
-                device
-                    ? showDevicePlaylistPicker(context, ref, [track])
-                    : showPlaylistPicker(context, ref, [track]);
-              },
-            ),
-            if (downloads.supported && !device)
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TrackTile(track: track),
+              const Divider(),
               ListTile(
-                leading: Icon(downloaded ? Icons.delete_outline_rounded : Icons.download_rounded),
-                title: Text(downloaded ? 'Remove download' : 'Download'),
+                leading: const Icon(Icons.queue_play_next_rounded),
+                title: const Text('Play next'),
                 onTap: () {
                   close();
-                  downloaded ? downloads.delete(track.id) : downloads.download(track);
+                  ref.read(playerPortProvider).playNext(track);
+                  showSnack(context, 'Playing next: ${track.title}');
                 },
               ),
-            ListTile(
-              leading: const Icon(Icons.album_rounded),
-              title: Text('Go to album · ${track.album}'),
-              onTap: () {
-                close();
-                context.go(device ? '/library/device/album/${track.albumId}' : '/explore/album/${track.albumId}');
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.person_rounded),
-              title: Text('Go to artist · ${track.artist}'),
-              onTap: () {
-                close();
-                context.go(device ? '/library/device/artist/${track.artistId}' : '/explore/artist/${track.artistId}');
-              },
-            ),
-          ],
+              ListTile(
+                leading: const Icon(Icons.queue_music_rounded),
+                title: const Text('Add to queue'),
+                onTap: () {
+                  close();
+                  ref.read(playerPortProvider).enqueue(track);
+                  showSnack(context, 'Added to queue');
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.playlist_add_rounded),
+                title: const Text('Add to playlist'),
+                onTap: () {
+                  close();
+                  device ? showDevicePlaylistPicker(context, ref, [track]) : showPlaylistPicker(context, ref, [track]);
+                },
+              ),
+              if (downloads.supported && !device)
+                ListTile(
+                  leading: Icon(downloaded ? Icons.delete_outline_rounded : Icons.download_rounded),
+                  title: Text(downloaded ? 'Remove download' : 'Download'),
+                  onTap: () {
+                    close();
+                    downloaded ? downloads.delete(track.id) : downloads.download(track);
+                  },
+                ),
+              ListTile(
+                leading: const Icon(Icons.album_rounded),
+                title: Text('Go to album · ${track.album}'),
+                onTap: () {
+                  close();
+                  context.go(device ? '/library/device/album/${track.albumId}' : '/explore/album/${track.albumId}');
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.person_rounded),
+                title: Text('Go to artist · ${track.artist}'),
+                onTap: () {
+                  close();
+                  context.go(device ? '/library/device/artist/${track.artistId}' : '/explore/artist/${track.artistId}');
+                },
+              ),
+              ListTile(
+                key: const Key('track-info'),
+                leading: const Icon(Icons.info_outline_rounded),
+                title: const Text(QualityStrings.trackInfo),
+                subtitle: Text(qualityLabel(track)),
+                onTap: () {
+                  close();
+                  showTrackInfo(context, track);
+                },
+              ),
+            ],
+          ),
         ),
       );
     },
+  );
+}
+
+/// Dialog with the audio properties of [track] (format, bitrate, ...).
+Future<void> showTrackInfo(BuildContext context, Track track) {
+  final rows = trackInfoRows(track, formatSize: formatBytes);
+  final badge = qualityBadgeText(qualityTier(track));
+  return showDialog<void>(
+    context: context,
+    builder: (dialog) => AlertDialog(
+      title: Text(track.title, maxLines: 2, overflow: TextOverflow.ellipsis),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (badge != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Text(
+                badge,
+                key: const Key('track-info-badge'),
+                style: const TextStyle(color: QodiTokens.orange, fontWeight: FontWeight.w800),
+              ),
+            ),
+          for (final (label, value) in rows)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(label, style: TextStyle(color: QodiColors.of(dialog).textMuted)),
+                  ),
+                  Text(value, style: const TextStyle(fontWeight: FontWeight.w700)),
+                ],
+              ),
+            ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(dialog).pop(),
+          child: Text(MaterialLocalizations.of(dialog).closeButtonLabel),
+        ),
+      ],
+    ),
   );
 }
 
@@ -124,19 +181,19 @@ class ConnectedTrackTile extends ConsumerWidget {
       highlighted: current == track.id,
       favorite: fav,
       leading: leading,
-      trailing: trailing ??
+      trailing:
+          trailing ??
           (downloading
               ? const SizedBox.square(
                   dimension: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: QodiTokens.orange))
+                  child: CircularProgressIndicator(strokeWidth: 2, color: QodiTokens.orange),
+                )
               : offline
-                  ? const OfflineBadge()
-                  : null),
-      onFavorite: () => toggleTrackFavorite(ref, track).catchError(
-            (Object _) {
-              if (context.mounted) showSnack(context, 'Could not update favorites');
-            },
-          ),
+              ? const OfflineBadge()
+              : null),
+      onFavorite: () => toggleTrackFavorite(ref, track).catchError((Object _) {
+        if (context.mounted) showSnack(context, 'Could not update favorites');
+      }),
       onTap: () => ref.read(playerPortProvider).playTracks(queue, startIndex: index),
       onMore: () => showTrackActions(context, ref, track),
     );

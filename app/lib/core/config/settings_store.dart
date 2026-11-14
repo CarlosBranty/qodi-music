@@ -28,12 +28,15 @@ class SettingsStore {
   static const _kToken = 'token';
   static const _kUserId = 'user_id';
   static const _kUsername = 'username';
+  static const _kIsAdmin = 'is_admin';
   static const _kTheme = 'theme';
   static const _kQuality = 'quality';
   static const _kHistory = 'history';
   static const _kDeviceOnly = 'device_only';
   static const _kDeviceFolders = 'device_folders';
   static const _kEqualizer = 'equalizer';
+  static const _kUpdateLastCheck = 'update_last_check';
+  static const _kUpdateLastResult = 'update_last_result';
   static const historyLimit = 30;
 
   SharedPreferences get prefs => _prefs;
@@ -47,7 +50,11 @@ class SettingsStore {
     return AuthSession(
       serverUrl: server,
       token: t,
-      user: AuthUser(id: _prefs.getString(_kUserId) ?? '', username: name),
+      user: AuthUser(
+        id: _prefs.getString(_kUserId) ?? '',
+        username: name,
+        isAdmin: _prefs.getBool(_kIsAdmin) ?? false,
+      ),
     );
   }
 
@@ -56,6 +63,7 @@ class SettingsStore {
     await _prefs.setString(_kToken, s.token);
     await _prefs.setString(_kUserId, s.user.id);
     await _prefs.setString(_kUsername, s.user.username);
+    await _prefs.setBool(_kIsAdmin, s.user.isAdmin);
   }
 
   /// Clears the token but keeps the server URL to prefill the login form.
@@ -63,6 +71,7 @@ class SettingsStore {
     await _prefs.remove(_kToken);
     await _prefs.remove(_kUserId);
     await _prefs.remove(_kUsername);
+    await _prefs.remove(_kIsAdmin);
   }
 
   /// "Use without server": the app runs on device music only.
@@ -93,6 +102,19 @@ class SettingsStore {
   }
 
   Future<void> setEqualizer(EqualizerSettings v) => _prefs.setString(_kEqualizer, jsonEncode(v.toJson()));
+
+  /// Last Android update check (time and a short result text).
+  DateTime? get updateLastCheck {
+    final ms = _prefs.getInt(_kUpdateLastCheck);
+    return ms == null ? null : DateTime.fromMillisecondsSinceEpoch(ms);
+  }
+
+  String? get updateLastResult => _prefs.getString(_kUpdateLastResult);
+
+  Future<void> setUpdateCheck(DateTime at, String result) async {
+    await _prefs.setInt(_kUpdateLastCheck, at.millisecondsSinceEpoch);
+    await _prefs.setString(_kUpdateLastResult, result);
+  }
 
   /// Recently played tracks, most recent first.
   List<Track> get history {

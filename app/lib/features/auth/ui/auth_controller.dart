@@ -6,6 +6,7 @@ import '../data/auth_api.dart';
 import '../domain/auth_state.dart';
 
 final authGatewayProvider = Provider<AuthGateway>((ref) => AuthApi());
+final registerGatewayProvider = Provider<RegisterGateway>((ref) => AuthApi());
 
 /// Current session (null = logged out).
 final authControllerProvider =
@@ -19,10 +20,30 @@ class AuthController extends Notifier<AuthSession?> {
     return ref.read(settingsStoreProvider).session;
   }
 
-  Future<void> login(String serverUrl, String username, String password) async {
+  Future<void> login(String serverUrl, String username, String password) async =>
+      _adopt(await ref.read(authGatewayProvider).login(serverUrl, username, password));
+
+  /// Creates an account with an invite and signs in with it.
+  Future<void> register(String serverUrl, String inviteCode, String username, String password) async =>
+      _adopt(await ref.read(registerGatewayProvider).register(serverUrl, inviteCode, username, password));
+
+  /// Re-reads `/me` (e.g. `is_admin` for sessions saved by older versions).
+  /// Errors are ignored: offline keeps the stored user.
+  Future<void> refreshUser(Future<AuthUser> Function() me) async {
+    final current = state;
+    if (current == null) return;
+    try {
+      final user = await me();
+      if (state?.token != current.token) return;
+      final next = current.withUser(user);
+      await ref.read(settingsStoreProvider).saveSession(next);
+      state = next;
+    } catch (_) {}
+  }
+
+  Future<void> _adopt(AuthSession session) async {
     final settings = ref.read(settingsStoreProvider);
     final previousServer = settings.serverUrl;
-    final session = await ref.read(authGatewayProvider).login(serverUrl, username, password);
     if (previousServer != null &&
         ApiClient.normalizeServerUrl(previousServer) != session.serverUrl) {
       await ref.read(platformServicesProvider).cache.clear();

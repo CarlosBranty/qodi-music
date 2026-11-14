@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../core/theme/tokens.dart';
 import '../../features/library/domain/entities.dart';
 import 'cover_art.dart';
+import 'quality_badge.dart';
 
 /// Favorites-style row: round cover, bold title, grey artist, orange heart.
 class TrackTile extends StatelessWidget {
@@ -18,6 +19,7 @@ class TrackTile extends StatelessWidget {
     this.trailing,
     this.highlighted = false,
     this.subtitle,
+    this.showQuality = true,
   });
 
   final Track track;
@@ -30,6 +32,9 @@ class TrackTile extends StatelessWidget {
   final Widget? trailing;
   final bool highlighted;
   final String? subtitle;
+
+  /// Shows the compact quality label (e.g. `FLAC · 24/96`) after the artist.
+  final bool showQuality;
 
   @override
   Widget build(BuildContext context) {
@@ -65,11 +70,21 @@ class TrackTile extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    subtitle ?? track.artist,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.bodySmall?.copyWith(color: c.textMuted),
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          subtitle ?? track.artist,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.bodySmall?.copyWith(color: c.textMuted),
+                        ),
+                      ),
+                      if (showQuality) ...[
+                        const SizedBox(width: 6),
+                        QualityLabel(track: track),
+                      ],
+                    ],
                   ),
                 ],
               ),

@@ -17,6 +17,7 @@ import 'package:qodi_music/features/player/domain/play_queue.dart';
 import 'package:qodi_music/features/player/domain/player_port.dart';
 import 'package:qodi_music/features/player/ui/player_providers.dart';
 import 'package:qodi_music/features/stats/data/prefs_plays_outbox.dart';
+import 'package:qodi_music/features/update/ui/update_controller.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class FakePlayer implements PlayerPort {
@@ -103,6 +104,7 @@ Future<List<Override>> baseOverrides({
   Map<String, Object> prefs = const {},
   DeviceMusicServices? device,
   FavoritesRepository? favorites,
+  bool updatesSupported = false,
 }) async {
   SharedPreferences.setMockInitialValues(prefs);
   final p = await SharedPreferences.getInstance();
@@ -117,6 +119,8 @@ Future<List<Override>> baseOverrides({
     mediaUrlsProvider.overrideWithValue(NoCoverUrls()),
     favoritesRepositoryProvider.overrideWithValue(favorites ?? FakeFavorites()),
     waveformProvider.overrideWith((ref, id) async => List<double>.filled(120, 0.5)),
+    // flutter_test reports Android: keep self-update off unless a test opts in.
+    updatesSupportedProvider.overrideWithValue(updatesSupported),
   ];
 }
 

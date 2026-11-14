@@ -50,6 +50,7 @@ Release builds: `flutter build web --release`, `flutter build linux --release`,
   "Downloaded" or "N of M downloaded", and "Download all" turns into a
   progress ring while downloading. Web has no downloads, so no badge there.
 - Equalizer (Android) — see below.
+- Audio quality per song, accounts with invites, and Android self-update — see below.
 
 ## Equalizer
 
@@ -74,6 +75,60 @@ been prepared for the first time, so the screen asks to play a song until then).
 
 Where unsupported, the Settings and Now Playing entries are hidden and the
 screen (if reached) shows "Not available on this platform".
+
+## Audio quality
+
+Track rows show a compact label after the artist: `FLAC · 24/96`,
+`FLAC · 16/44.1`, `MP3 · 320`, `OPUS · 128` (lossless files show bit depth /
+sample rate in kHz; lossy files show the bitrate). Hi-Res labels are orange.
+Now Playing shows a prominent badge — **Hi-Res** (lossless and ≥ 24-bit or
+> 48 kHz) or **Lossless** (any other lossless file) — next to what is actually
+played. With Settings › Streaming quality = Opus 128 kbps, a streamed song
+reads `OPUS 128 · from FLAC 24/96` and gets no lossless badge (downloaded and
+device files always play the original). Track actions › "Track info" lists
+format, bitrate, sample rate, bit depth, channels and size.
+
+Data comes from the Track fields `sample_rate_hz`, `bit_depth`, `channels`,
+`lossless`; older servers omit them (labels fall back to the format, and
+`lossless` is derived from it: flac/wav/aiff/ape/alac). Device tracks get the
+sample rate from the tag reader (no bit depth/channels available) and
+`lossless` from the extension; files cached before this version show the
+format only until they change on disk.
+
+## Accounts and invites
+
+- **Create account**: login › "Have an invite? Create account" (server URL,
+  invite code, username, password, confirmation). The form checks the
+  server rules first (username `^[a-z0-9_.-]{3,32}$` after lowercasing,
+  password 8–128) and explains `invalid_invite`, `username_taken` and
+  `bad_request`.
+- **Invite links**: `<server>/join?code=XXXX` opened in a browser loads the web
+  app on `/join`, pre-filling the server (page origin) and the code.
+- **Settings › Account**: username with an "Admin" badge, "Change password"
+  (`PUT /me/password`; a wrong current password is reported without signing
+  out). `is_admin` is refreshed from `/me` on start/resume.
+- **Settings › Users & invites** (admins only): users (delete with
+  confirmation; deleting yourself is disabled), invites with status (Active /
+  Expired / Used up), uses x/y and expiry; create an invite (expiry hours
+  1–720, max uses 1–50) → the code plus copy actions for the join link and the
+  APK link `<server>/downloads/android/qodi-music.apk`; revoke. A 403
+  `forbidden` is shown as "You don't have permission to do that."
+
+## Android updates
+
+Android only (hidden on web, desktop and iOS). On start (at most once every
+6 hours; time and result stored in shared preferences) and from Settings ›
+App updates › "Check for updates", the app calls the public
+`GET <server>/api/v1/app/android` (works in device-only mode when a server URL
+was saved; otherwise it is skipped) and compares `version_code` with the
+installed build number (`package_info_plus`). The check never blocks start-up.
+If newer: "Update available (vX → vY)" with Update / Later. Update downloads
+the APK into the app cache dir with a progress bar, verifies its `sha256`
+(mismatch → error and the file is deleted), asks for "Install unknown apps"
+if needed (denied → "Open settings") and opens the system installer
+(`open_filex`, through its own FileProvider; manifest:
+`REQUEST_INSTALL_PACKAGES`). A 404 means no APK is published. Settings shows
+the current version and the last check result.
 
 ## Music on this device
 
@@ -121,7 +176,8 @@ player (queue, background playback, media notification / MPRIS).
 lib/
   core/      api client, config/prefs, theme tokens, router, platform split
   features/  auth, library, player, playlists, favorites, stats, lyrics,
-             downloads, search, home, settings, device_music, equalizer — each with
+             downloads, search, home, settings, device_music, equalizer, account,
+             update — each with
              domain/data/ui
   shared/    VinylCover, ArcWaveformSeekbar, BentoCard, PillNavBar, TrackTile, ...
 ```

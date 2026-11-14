@@ -7,6 +7,9 @@ import '../../../core/config/settings_store.dart';
 import '../../../core/theme/tokens.dart';
 import '../../../shared/format.dart';
 import '../../../shared/widgets/bento_card.dart';
+import '../../account/domain/account.dart';
+import '../../account/ui/account_providers.dart';
+import '../../account/ui/change_password_dialog.dart';
 import '../../auth/ui/auth_controller.dart';
 import '../../device_music/ui/device_folders_settings.dart';
 import '../../device_music/ui/device_music_providers.dart';
@@ -15,6 +18,9 @@ import '../../equalizer/ui/equalizer_controller.dart';
 import '../../library/ui/library_providers.dart';
 import '../../library/ui/track_actions.dart';
 import '../../player/ui/player_providers.dart';
+import '../../update/domain/app_update.dart';
+import '../../update/ui/update_controller.dart';
+import '../../update/ui/update_dialogs.dart';
 import 'settings_controllers.dart';
 
 final _downloadBytesProvider = FutureProvider.autoDispose<int>((ref) async {
@@ -35,6 +41,8 @@ class SettingsScreen extends ConsumerWidget {
     final server = session != null;
     final device = ref.watch(deviceMusicSupportedProvider);
     final equalizer = ref.watch(equalizerControllerProvider.select((s) => s.supported));
+    final admin = ref.watch(isAdminProvider);
+    final updates = ref.watch(updatesSupportedProvider);
     Widget label(String t) => Padding(
           padding: const EdgeInsets.fromLTRB(8, 20, 8, 8),
           child: Text(t, style: TextStyle(color: c.textMuted, fontWeight: FontWeight.w700)),
@@ -54,7 +62,19 @@ class SettingsScreen extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: server
                         ? [
-                            Text(session.user.username, style: const TextStyle(fontWeight: FontWeight.w800)),
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: Text(session.user.username,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(fontWeight: FontWeight.w800)),
+                                ),
+                                if (admin) ...[
+                                  const SizedBox(width: 8),
+                                  const _AdminBadge(),
+                                ],
+                              ],
+                            ),
                             Text(session.serverUrl, style: TextStyle(color: c.textMuted, fontSize: 12)),
                           ]
                         : [
@@ -73,6 +93,36 @@ class SettingsScreen extends ConsumerWidget {
               ],
             ),
           ),
+          if (server) ...[
+            label(AccountStrings.account),
+            BentoCard(
+              padding: EdgeInsets.zero,
+              child: Column(
+                children: [
+                  ListTile(
+                    key: const Key('settings-change-password'),
+                    leading: const Icon(Icons.password_rounded, color: QodiTokens.orange),
+                    title: const Text(AccountStrings.changePassword),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: () async {
+                      if (await showChangePasswordDialog(context) && context.mounted) {
+                        showSnack(context, AccountStrings.passwordChanged);
+                      }
+                    },
+                  ),
+                  if (admin)
+                    ListTile(
+                      key: const Key('settings-users'),
+                      leading: const Icon(Icons.group_rounded, color: QodiTokens.orange),
+                      title: const Text(AccountStrings.usersAndInvites),
+                      subtitle: const Text(AccountStrings.usersSubtitle),
+                      trailing: const Icon(Icons.chevron_right_rounded),
+                      onTap: () => context.push('/settings/users'),
+                    ),
+                ],
+              ),
+            ),
+          ],
           label('Appearance'),
           SegmentedButton<AppThemePreference>(
             segments: const [
@@ -165,6 +215,10 @@ class SettingsScreen extends ConsumerWidget {
                 ],
               ),
             ),
+          if (updates) ...[
+            label(UpdateStrings.appUpdates),
+            const UpdateSettingsCard(),
+          ],
           const SizedBox(height: 28),
           if (server)
             FilledButton.icon(
@@ -180,4 +234,17 @@ class SettingsScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+class _AdminBadge extends StatelessWidget {
+  const _AdminBadge();
+
+  @override
+  Widget build(BuildContext context) => Container(
+        key: const Key('settings-admin-badge'),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        decoration: BoxDecoration(color: QodiTokens.orange, borderRadius: BorderRadius.circular(10)),
+        child: const Text(AccountStrings.admin,
+            style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800)),
+      );
 }

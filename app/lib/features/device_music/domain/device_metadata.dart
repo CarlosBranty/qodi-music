@@ -1,5 +1,6 @@
 import 'package:path/path.dart' as p;
 
+import '../../library/domain/audio_quality.dart';
 import '../../library/domain/entities.dart';
 import 'device_track.dart';
 
@@ -20,6 +21,7 @@ class RawTags {
     this.genre,
     this.durationMs,
     this.bitrateKbps,
+    this.sampleRateHz,
   });
 
   final String? title;
@@ -32,6 +34,7 @@ class RawTags {
   final String? genre;
   final int? durationMs;
   final int? bitrateKbps;
+  final int? sampleRateHz;
 
   static const empty = RawTags();
 }
@@ -79,6 +82,9 @@ DeviceTrack buildDeviceTrack({
     durationMs: tags.durationMs ?? 0,
     format: ext,
     bitrateKbps: _positive(tags.bitrateKbps),
+    sampleRateHz: _positive(tags.sampleRateHz),
+    // The tag reader exposes no bit depth/channels: lossless comes from the format.
+    lossless: isLosslessFormat(ext),
     sizeBytes: sizeBytes,
     hasCover: coverPath != null,
     hasLyrics: lyricsPath != null,

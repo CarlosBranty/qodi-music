@@ -2,10 +2,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../../core/config/settings_store.dart';
 import '../../../core/theme/tokens.dart';
 import '../../../shared/format.dart';
 import '../../../shared/widgets/arc_waveform_seekbar.dart';
 import '../../../shared/widgets/cover_art.dart';
+import '../../../shared/widgets/quality_badge.dart';
 import '../../../shared/widgets/vinyl_cover.dart';
 import '../../device_music/domain/device_track.dart';
 import '../../device_music/ui/device_playlist_picker.dart';
@@ -17,6 +19,7 @@ import '../../library/ui/library_providers.dart';
 import '../../library/ui/track_actions.dart';
 import '../../lyrics/ui/lyrics_sheet.dart';
 import '../../playlists/ui/playlist_picker.dart';
+import '../../settings/ui/settings_controllers.dart';
 import '../domain/play_queue.dart';
 import '../domain/player_port.dart';
 import 'player_providers.dart';
@@ -105,6 +108,8 @@ class NowPlayingScreen extends ConsumerWidget {
                         key: const Key('np-artist'),
                         textAlign: TextAlign.center,
                         style: TextStyle(color: c.textMuted, fontSize: 15)),
+                    const SizedBox(height: 8),
+                    _QualityLine(track: track),
                   ],
                 ),
               ),
@@ -116,6 +121,21 @@ class NowPlayingScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+}
+
+/// What is actually being played: local files (device or downloaded) are the
+/// original; streams follow the quality setting (Opus is transcoded).
+class _QualityLine extends ConsumerWidget {
+  const _QualityLine({required this.track});
+  final Track track;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final local = ref.watch(trackAvailableOfflineProvider(track.id));
+    final quality = ref.watch(qualityProvider);
+    final transcoded = !local && quality == StreamQuality.opus128;
+    return NowPlayingQualityBadge(track: track, transcodedOpusKbps: transcoded ? 128 : null);
   }
 }
 

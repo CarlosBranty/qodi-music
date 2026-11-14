@@ -13,6 +13,15 @@ Syncthing ──► /music (read-only) ──► qodi-server (Rust, SQLite) ─�
 | Client (Flutter) | `app/` | [app/README.md](app/README.md) |
 | API contract | `docs/api.md` | [docs/api.md](docs/api.md) |
 
+## Screenshots
+
+| Home | Library | Now playing | Equalizer |
+|:---:|:---:|:---:|:---:|
+| <img src="docs/screenshots/home-light.png" width="200" alt="Home"> | <img src="docs/screenshots/library-light.png" width="200" alt="Library"> | <img src="docs/screenshots/now-playing-light.png" width="200" alt="Now playing"> | <img src="docs/screenshots/equalizer-light.png" width="200" alt="Equalizer"> |
+| <img src="docs/screenshots/home-dark.png" width="200" alt="Home, dark theme"> | <img src="docs/screenshots/library-dark.png" width="200" alt="Library, dark theme"> | <img src="docs/screenshots/now-playing-dark.png" width="200" alt="Now playing, dark theme"> | <img src="docs/screenshots/equalizer-dark.png" width="200" alt="Equalizer, dark theme"> |
+
+Regenerate with `cd app && flutter test screenshots --update-goldens` (device-only mode with sample songs).
+
 ## Deploy
 
 ### CI/CD (GitHub Actions → GHCR → Dokploy)

@@ -18,7 +18,7 @@ Branch: `feat/qodi-music-v1` · Delivery: ask-on-risk · Runners: `cargo test` (
 | T1 | S2 | delegated (writer trigger a: parallel with T2, disjoint `server/**`) | done — cargo test 19/19, clippy clean | 1f7bdf4 |
 | T2 | S3, S4 | delegated (writer trigger a: parallel with T1, disjoint `app/**`) | done — analyze clean, 36 tests, linux+web builds | beae5bd |
 | T3 | S1, S5 | inline (Dockerfile, compose, README) | done — docker build NOT run (no Docker locally) | e605f83, eeb94f9 |
-| T5 | S6 | delegated (context backstop: unfamiliar 12k-line app/; reading prepares the write) | in progress | |
+| T5 | S6 | delegated (context backstop: unfamiliar 12k-line app/; reading prepares the write) | done — analyze clean, 74 tests, linux+web builds, Linux smoke scanned 3 FLAC | a925f62 |
 | T4 | S2 | independent verifier — Risk item 2 (auth/token handling) | done — 0 blockers, 6 advisories (2 fixed) | see HEAD |
 
 ## Log
@@ -28,3 +28,4 @@ Branch: `feat/qodi-music-v1` · Delivery: ask-on-risk · Runners: `cargo test` (
 - L3 T4 verdict: no blockers. Fixed advisories: per-user play dedupe, data dir 0700. Open advisories: JWT secret min length, login rate limit (use Cloudflare rule), `?token=` in proxy logs, no token revocation.
 - L4 Seam check: server serves the web build at `/` with SPA fallback; plays/playlists payloads from the app accepted. Pending: `docker compose build`, Android APK, real-device background playback test.
 - L5 (2026-11-13) "ok ahora tambien funciona como reproductor de musica offline? paraque tome musica del propio telefono" → verified: not supported (no storage permission, no device source, login required). User: "Si hazlo" (did not pick mixed vs separate; assistant chose separate section).
+- L6 T5 done: Dart folder scan (audio_metadata_reader), drift schema v2 additive only (verified CREATE-only diff + migration test). Untested on device: Android permission/folder picker, iOS import, macOS sandbox bookmarks.

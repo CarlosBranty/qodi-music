@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/core_providers.dart';
+import '../../device_music/domain/device_track.dart';
 import '../../downloads/ui/downloads_controller.dart';
 import '../data/cached_library_repository.dart';
 import '../data/library_api.dart';
@@ -40,7 +41,11 @@ final artistTracksProvider = FutureProvider.autoDispose.family<List<Track>, Stri
     (ref, id) => ref.watch(libraryRepositoryProvider).tracks(artistId: id));
 
 /// 120 waveform peaks (0..1). Falls back to a flat line when unavailable.
+/// Device tracks and device-only mode never ask the server.
 final waveformProvider = FutureProvider.autoDispose.family<List<double>, String>((ref, id) async {
+  if (isDeviceTrackId(id) || !ref.watch(apiClientProvider).hasSession) {
+    return List<double>.filled(120, 0.25);
+  }
   try {
     final peaks = await ref.watch(libraryApiProvider).waveform(id);
     if (peaks.isNotEmpty) return peaks;

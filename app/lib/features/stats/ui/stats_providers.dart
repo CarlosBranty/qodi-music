@@ -12,6 +12,7 @@ final statsApiProvider = Provider<StatsApi>((ref) => StatsApi(ref.watch(apiClien
 final playsReporterProvider = Provider<PlaysReporter>((ref) => PlaysReporter(
       ref.watch(statsApiProvider),
       ref.watch(platformServicesProvider).outbox,
+      canFlush: () => ref.read(apiClientProvider).hasSession,
     ));
 
 final playRecorderProvider =

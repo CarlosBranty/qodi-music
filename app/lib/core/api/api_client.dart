@@ -38,6 +38,12 @@ class ApiClient {
   final void Function()? _onUnauthorized;
   final Dio dio;
 
+  /// True when a server URL and a token are configured.
+  bool get hasSession {
+    final t = _token();
+    return (_serverUrl() ?? '').trim().isNotEmpty && t != null && t.isNotEmpty;
+  }
+
   /// Normalized server origin without trailing slash, e.g. `http://nas:4040`.
   String get serverOrigin => normalizeServerUrl(_serverUrl() ?? '');
 

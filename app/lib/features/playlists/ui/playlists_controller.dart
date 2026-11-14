@@ -19,8 +19,9 @@ class PlaylistsController extends AsyncNotifier<List<Playlist>> {
   PlaylistRepository get _repo => ref.read(playlistRepositoryProvider);
 
   @override
-  Future<List<Playlist>> build() {
-    ref.watch(authControllerProvider);
+  Future<List<Playlist>> build() async {
+    // Device-only mode: server playlists are unavailable, no API call.
+    if (ref.watch(authControllerProvider) == null) return const [];
     return _repo.list();
   }
 

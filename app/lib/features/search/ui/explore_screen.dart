@@ -5,7 +5,10 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../../core/theme/tokens.dart';
+import '../../../shared/widgets/connect_server_hint.dart';
 import '../../../shared/widgets/cover_art.dart';
+import '../../auth/ui/auth_controller.dart';
+import '../../device_music/domain/device_track.dart';
 import '../../library/domain/entities.dart';
 import '../../library/ui/library_providers.dart';
 import '../../library/ui/track_actions.dart';
@@ -42,6 +45,13 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final c = QodiColors.of(context);
+    if (!ref.watch(serverConnectedProvider)) {
+      return const ConnectServerHint(
+        title: 'Explore your server',
+        message: 'Browsing albums and artists of your music server needs a connection. '
+            'Your device music is in Library.',
+      );
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -78,9 +88,9 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
               children: [
-                _Chip('Albums', selected: _tab == 0, onTap: () => setState(() => _tab = 0)),
+                FilterPill('Albums', selected: _tab == 0, onTap: () => setState(() => _tab = 0)),
                 const SizedBox(width: 8),
-                _Chip('Artists', selected: _tab == 1, onTap: () => setState(() => _tab = 1)),
+                FilterPill('Artists', selected: _tab == 1, onTap: () => setState(() => _tab = 1)),
               ],
             ),
           ),
@@ -96,8 +106,8 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
   }
 }
 
-class _Chip extends StatelessWidget {
-  const _Chip(this.label, {required this.selected, required this.onTap});
+class FilterPill extends StatelessWidget {
+  const FilterPill(this.label, {super.key, required this.selected, required this.onTap});
   final String label;
   final bool selected;
   final VoidCallback onTap;
@@ -184,7 +194,9 @@ class AlbumCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = QodiColors.of(context);
     return GestureDetector(
-      onTap: () => context.go('/explore/album/${album.id}'),
+      onTap: () => context.go(album.id.startsWith(deviceAlbumIdPrefix)
+          ? '/library/device/album/${album.id}'
+          : '/explore/album/${album.id}'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

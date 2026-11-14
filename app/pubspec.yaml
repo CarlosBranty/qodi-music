@@ -51,6 +51,10 @@ dependencies:
   google_fonts: ^9.0.0
   path: ^1.9.1
   audio_service_mpris: ^0.2.1
+  audio_metadata_reader: ^1.8.1
+  file_picker: ^13.3.3
+  permission_handler: ^13.0.2
+  crypto: ^3.0.8
 
 dev_dependencies:
   flutter_test:

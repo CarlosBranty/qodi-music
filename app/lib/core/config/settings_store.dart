@@ -30,6 +30,8 @@ class SettingsStore {
   static const _kTheme = 'theme';
   static const _kQuality = 'quality';
   static const _kHistory = 'history';
+  static const _kDeviceOnly = 'device_only';
+  static const _kDeviceFolders = 'device_folders';
   static const historyLimit = 30;
 
   SharedPreferences get prefs => _prefs;
@@ -60,6 +62,14 @@ class SettingsStore {
     await _prefs.remove(_kUserId);
     await _prefs.remove(_kUsername);
   }
+
+  /// "Use without server": the app runs on device music only.
+  bool get deviceOnly => _prefs.getBool(_kDeviceOnly) ?? false;
+  Future<void> setDeviceOnly(bool v) => _prefs.setBool(_kDeviceOnly, v);
+
+  /// Extra folders scanned for device music (besides the platform defaults).
+  List<String> get deviceFolders => _prefs.getStringList(_kDeviceFolders) ?? const [];
+  Future<void> setDeviceFolders(List<String> v) => _prefs.setStringList(_kDeviceFolders, v);
 
   AppThemePreference get theme => AppThemePreference.values
       .firstWhere((e) => e.name == _prefs.getString(_kTheme), orElse: () => AppThemePreference.system);

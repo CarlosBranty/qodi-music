@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../features/auth/ui/auth_controller.dart';
 import '../../features/auth/ui/login_screen.dart';
+import '../../features/device_music/ui/device_detail_screens.dart';
 import '../../features/home/ui/home_screen.dart';
 import '../../features/library/ui/album_detail_screen.dart';
 import '../../features/library/ui/library_screen.dart';
@@ -18,6 +19,7 @@ import '../../shared/widgets/pill_nav_bar.dart';
 final appRouterProvider = Provider<GoRouter>((ref) {
   final refresh = ValueNotifier<int>(0);
   ref.listen(authControllerProvider, (_, _) => refresh.value++);
+  ref.listen(deviceOnlyProvider, (_, _) => refresh.value++);
   ref.onDispose(refresh.dispose);
 
   final router = GoRouter(
@@ -25,9 +27,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     refreshListenable: refresh,
     redirect: (context, state) {
       final loggedIn = ref.read(authControllerProvider) != null;
+      final deviceOnly = ref.read(deviceOnlyProvider);
       final atLogin = state.matchedLocation == '/login';
-      if (!loggedIn) return atLogin ? null : '/login';
-      if (atLogin) return '/home';
+      if (!loggedIn && !deviceOnly) return atLogin ? null : '/login';
+      // Device-only users may open /login to connect to a server.
+      if (atLogin && loggedIn) return '/home';
       return null;
     },
     routes: [
@@ -64,6 +68,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 GoRoute(
                   path: 'playlist/:id',
                   builder: (_, s) => PlaylistDetailScreen(playlistId: s.pathParameters['id']!),
+                ),
+                GoRoute(
+                  path: 'device/album/:id',
+                  builder: (_, s) => DeviceAlbumScreen(albumId: s.pathParameters['id']!),
+                ),
+                GoRoute(
+                  path: 'device/artist/:id',
+                  builder: (_, s) => DeviceArtistScreen(artistId: s.pathParameters['id']!),
+                ),
+                GoRoute(
+                  path: 'device/playlist/:id',
+                  builder: (_, s) => DevicePlaylistScreen(playlistId: s.pathParameters['id']!),
                 ),
               ],
             ),

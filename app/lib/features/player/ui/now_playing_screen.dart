@@ -7,7 +7,9 @@ import '../../../shared/format.dart';
 import '../../../shared/widgets/arc_waveform_seekbar.dart';
 import '../../../shared/widgets/cover_art.dart';
 import '../../../shared/widgets/vinyl_cover.dart';
-import '../../favorites/ui/favorites_controller.dart';
+import '../../device_music/domain/device_track.dart';
+import '../../device_music/ui/device_playlist_picker.dart';
+import '../../favorites/ui/track_favorite.dart';
 import '../../library/domain/entities.dart';
 import '../../library/ui/library_providers.dart';
 import '../../library/ui/track_actions.dart';
@@ -54,7 +56,9 @@ class NowPlayingScreen extends ConsumerWidget {
                         case 'queue':
                           showQueueSheet(context);
                         case 'playlist':
-                          showPlaylistPicker(context, ref, [track]);
+                          isDeviceTrackId(track.id)
+                              ? showDevicePlaylistPicker(context, ref, [track])
+                              : showPlaylistPicker(context, ref, [track]);
                         case 'more':
                           showTrackActions(context, ref, track);
                       }
@@ -238,8 +242,7 @@ class _Controls extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final port = ref.read(playerPortProvider);
     final c = QodiColors.of(context);
-    final favLoaded = ref.watch(favoritesControllerProvider).hasValue;
-    final fav = favLoaded ? ref.watch(favoriteIdsProvider).contains(track.id) : track.favorite;
+    final fav = watchIsFavorite(ref, track);
     final repeat = snapshot.repeat;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -291,7 +294,7 @@ class _Controls extends ConsumerWidget {
           IconButton(
             key: const Key('np-favorite'),
             tooltip: fav ? 'Remove from favorites' : 'Add to favorites',
-            onPressed: () => ref.read(favoritesControllerProvider.notifier).toggle(track).catchError((Object _) {
+            onPressed: () => toggleTrackFavorite(ref, track).catchError((Object _) {
               if (context.mounted) showSnack(context, 'Could not update favorites');
             }),
             icon: Icon(fav ? Icons.favorite_rounded : Icons.favorite_border_rounded, color: QodiTokens.orange),

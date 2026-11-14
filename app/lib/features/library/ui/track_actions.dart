@@ -5,7 +5,9 @@ import 'package:material_ui/material_ui.dart';
 import '../../../core/theme/tokens.dart';
 import '../../../shared/widgets/track_tile.dart';
 import '../../downloads/ui/downloads_controller.dart';
-import '../../favorites/ui/favorites_controller.dart';
+import '../../device_music/domain/device_track.dart';
+import '../../device_music/ui/device_playlist_picker.dart';
+import '../../favorites/ui/track_favorite.dart';
 import '../../player/ui/player_providers.dart';
 import '../../playlists/ui/playlist_picker.dart';
 import '../domain/entities.dart';
@@ -19,6 +21,7 @@ void showSnack(BuildContext context, String message) {
 /// Bottom sheet with actions for a track (queue, playlist, download, ...).
 Future<void> showTrackActions(BuildContext context, WidgetRef ref, Track track) {
   final downloads = ref.read(downloadsControllerProvider.notifier);
+  final device = isDeviceTrackId(track.id);
   return showModalBottomSheet<void>(
     context: context,
     builder: (sheet) {
@@ -53,10 +56,12 @@ Future<void> showTrackActions(BuildContext context, WidgetRef ref, Track track) 
               title: const Text('Add to playlist'),
               onTap: () {
                 close();
-                showPlaylistPicker(context, ref, [track]);
+                device
+                    ? showDevicePlaylistPicker(context, ref, [track])
+                    : showPlaylistPicker(context, ref, [track]);
               },
             ),
-            if (downloads.supported)
+            if (downloads.supported && !device)
               ListTile(
                 leading: Icon(downloaded ? Icons.delete_outline_rounded : Icons.download_rounded),
                 title: Text(downloaded ? 'Remove download' : 'Download'),
@@ -70,7 +75,7 @@ Future<void> showTrackActions(BuildContext context, WidgetRef ref, Track track) 
               title: Text('Go to album · ${track.album}'),
               onTap: () {
                 close();
-                context.go('/explore/album/${track.albumId}');
+                context.go(device ? '/library/device/album/${track.albumId}' : '/explore/album/${track.albumId}');
               },
             ),
             ListTile(
@@ -78,7 +83,7 @@ Future<void> showTrackActions(BuildContext context, WidgetRef ref, Track track) 
               title: Text('Go to artist · ${track.artist}'),
               onTap: () {
                 close();
-                context.go('/explore/artist/${track.artistId}');
+                context.go(device ? '/library/device/artist/${track.artistId}' : '/explore/artist/${track.artistId}');
               },
             ),
           ],
@@ -109,9 +114,7 @@ class ConnectedTrackTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final favIds = ref.watch(favoriteIdsProvider);
-    final loaded = ref.watch(favoritesControllerProvider).hasValue;
-    final fav = loaded ? favIds.contains(track.id) : track.favorite;
+    final fav = watchIsFavorite(ref, track);
     final current = ref.watch(playerSnapshotProvider.select((s) => s.value?.current?.id));
     final dl = ref.watch(downloadsControllerProvider);
     return TrackTile(
@@ -127,7 +130,7 @@ class ConnectedTrackTile extends ConsumerWidget {
               : dl.isDownloaded(track.id)
                   ? const Icon(Icons.download_done_rounded, size: 18, color: QodiTokens.orange)
                   : null),
-      onFavorite: () => ref.read(favoritesControllerProvider.notifier).toggle(track).catchError(
+      onFavorite: () => toggleTrackFavorite(ref, track).catchError(
             (Object _) {
               if (context.mounted) showSnack(context, 'Could not update favorites');
             },

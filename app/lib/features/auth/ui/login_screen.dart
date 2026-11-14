@@ -1,11 +1,13 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../../core/api/api_error.dart';
 import '../../../core/config/core_providers.dart';
 import '../../../core/theme/tokens.dart';
 import '../../../shared/widgets/vinyl_cover.dart';
+import '../../device_music/ui/device_music_providers.dart';
 import 'auth_controller.dart';
 
 String? validateServerUrl(String? v) {
@@ -70,9 +72,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (mounted) setState(() => _busy = false);
   }
 
+  /// Device-only mode: no server, device music only.
+  Future<void> _useWithoutServer() async {
+    await ref.read(deviceOnlyProvider.notifier).set(true);
+    if (mounted) context.go('/home');
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = QodiColors.of(context);
+    final deviceMusic = ref.watch(deviceMusicSupportedProvider);
     final text = Theme.of(context).textTheme;
     return Scaffold(
       body: SafeArea(
@@ -152,6 +161,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
                           : const Text('Sign in'),
                     ),
+                    if (deviceMusic) ...[
+                      const SizedBox(height: 12),
+                      OutlinedButton.icon(
+                        key: const Key('login-device-only'),
+                        onPressed: _busy ? null : _useWithoutServer,
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: QodiTokens.orange,
+                          side: const BorderSide(color: QodiTokens.orange, width: 1.5),
+                          minimumSize: const Size.fromHeight(52),
+                        ),
+                        icon: const Icon(Icons.phone_android_rounded),
+                        label: const Text('Use without server'),
+                      ),
+                      const SizedBox(height: 6),
+                      Text('Play the music stored on this device. You can connect a server later in Settings.',
+                          textAlign: TextAlign.center, style: text.bodySmall?.copyWith(color: c.textMuted)),
+                    ],
                   ],
                 ),
               ),

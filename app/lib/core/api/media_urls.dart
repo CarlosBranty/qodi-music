@@ -12,8 +12,10 @@ class ApiMediaUrls implements MediaUrls {
   ApiMediaUrls(this._api);
   final ApiClient _api;
 
+  /// Null without a server session (device-only mode): no network requests.
   @override
-  String? cover(String trackId) => _api.mediaUri('/tracks/$trackId/cover').toString();
+  String? cover(String trackId) =>
+      _api.hasSession ? _api.mediaUri('/tracks/$trackId/cover').toString() : null;
 
   @override
   Uri stream(String trackId, StreamQuality quality) => switch (quality) {

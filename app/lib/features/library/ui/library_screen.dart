@@ -5,6 +5,9 @@ import 'package:material_ui/material_ui.dart';
 import '../../../core/theme/tokens.dart';
 import '../../../shared/format.dart';
 import '../../../shared/widgets/cover_art.dart';
+import '../../auth/ui/auth_controller.dart';
+import '../../device_music/ui/device_music_providers.dart';
+import '../../device_music/ui/device_music_view.dart';
 import '../../downloads/ui/downloads_controller.dart';
 import '../../downloads/ui/downloads_view.dart';
 import '../../favorites/ui/favorites_controller.dart';
@@ -12,7 +15,8 @@ import '../../playlists/ui/playlist_picker.dart';
 import '../../playlists/ui/playlists_controller.dart';
 import 'track_actions.dart';
 
-/// Library tab: playlists, favorites and (native only) downloads.
+/// Library tab: server playlists, favorites, (native only) downloads and
+/// "On this device" music.
 class LibraryScreen extends ConsumerWidget {
   const LibraryScreen({super.key, this.initialTab});
   final String? initialTab;
@@ -20,15 +24,25 @@ class LibraryScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final offline = ref.read(downloadsControllerProvider.notifier).supported;
-    final tabs = ['Playlists', 'Favorites', if (offline) 'Downloads'];
+    final server = ref.watch(serverConnectedProvider);
+    final device = ref.watch(deviceMusicSupportedProvider);
+    // Without a server session only the device section is shown.
+    final tabs = [
+      if (server) ...['Playlists', 'Favorites', if (offline) 'Downloads'],
+      if (device) 'On this device',
+    ];
     final initial = switch (initialTab) {
-      'favorites' => 1,
-      'downloads' when offline => 2,
+      'favorites' when server => 1,
+      'downloads' when server && offline => 2,
+      'device' when device => tabs.length - 1,
       _ => 0,
     };
+    if (tabs.isEmpty) {
+      return const Center(child: Text('Connect to a server in Settings to see your library.'));
+    }
     final text = Theme.of(context).textTheme;
     return DefaultTabController(
-      key: ValueKey(initial),
+      key: ValueKey('${tabs.length}-$initial'),
       length: tabs.length,
       initialIndex: initial,
       child: Column(
@@ -52,9 +66,12 @@ class LibraryScreen extends ConsumerWidget {
           Expanded(
             child: TabBarView(
               children: [
-                const _PlaylistsTab(),
-                const _FavoritesTab(),
-                if (offline) const DownloadsView(),
+                if (server) ...[
+                  const _PlaylistsTab(),
+                  const _FavoritesTab(),
+                  if (offline) const DownloadsView(),
+                ],
+                if (device) const DeviceMusicView(),
               ],
             ),
           ),

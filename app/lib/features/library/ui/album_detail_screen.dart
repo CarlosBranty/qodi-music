@@ -7,6 +7,8 @@ import 'package:material_ui/material_ui.dart';
 import '../../../core/theme/tokens.dart';
 import '../../../shared/format.dart';
 import '../../../shared/widgets/cover_art.dart';
+import '../../device_music/domain/device_track.dart';
+import '../../device_music/ui/device_playlist_picker.dart';
 import '../../downloads/ui/downloads_controller.dart';
 import '../../player/ui/player_providers.dart';
 import '../../playlists/ui/playlist_picker.dart';
@@ -41,6 +43,8 @@ class CollectionHeader extends ConsumerWidget {
     final text = Theme.of(context).textTheme;
     final downloads = ref.read(downloadsControllerProvider.notifier);
     final player = ref.read(playerPortProvider);
+    // Device collections use local playlists and cannot be downloaded.
+    final device = tracks.isNotEmpty && tracks.every((t) => isDeviceTrackId(t.id));
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
       child: Column(
@@ -74,10 +78,14 @@ class CollectionHeader extends ConsumerWidget {
               ),
               IconButton.filledTonal(
                 tooltip: 'Add to playlist',
-                onPressed: tracks.isEmpty ? null : () => showPlaylistPicker(context, ref, tracks),
+                onPressed: tracks.isEmpty
+                    ? null
+                    : () => device
+                        ? showDevicePlaylistPicker(context, ref, tracks)
+                        : showPlaylistPicker(context, ref, tracks),
                 icon: const Icon(Icons.playlist_add_rounded),
               ),
-              if (downloads.supported)
+              if (downloads.supported && !device)
                 IconButton.filledTonal(
                   tooltip: 'Download all',
                   onPressed: tracks.isEmpty

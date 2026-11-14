@@ -2,7 +2,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/config/core_providers.dart';
+import '../../core/platform/local_image.dart';
 import '../../core/theme/tokens.dart';
+import '../../features/device_music/domain/device_track.dart';
+import '../../features/device_music/ui/device_music_providers.dart';
 
 /// Deterministic palette pick for an id (album/track/playlist).
 List<Color> seedColors(String seed) {
@@ -45,7 +48,10 @@ class CoverArt extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final url = trackId == null ? null : ref.watch(mediaUrlsProvider).cover(trackId!);
+    final id = trackId;
+    final device = id != null && isDeviceTrackId(id);
+    final localPath = device ? ref.watch(deviceCoverPathProvider(id)) : null;
+    final url = id == null || device ? null : ref.watch(mediaUrlsProvider).cover(id);
     final colors = seedColors(seed);
     final fallback = DecoratedBox(
       decoration: BoxDecoration(
@@ -63,7 +69,9 @@ class CoverArt extends ConsumerWidget {
         ),
       ),
     );
-    final image = url == null
+    final image = localPath != null
+        ? localFileImage(localPath, fallback: fallback)
+        : url == null
         ? fallback
         : Image.network(
             url,

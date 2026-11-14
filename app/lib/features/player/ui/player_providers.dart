@@ -7,16 +7,23 @@ import '../../settings/ui/settings_controllers.dart';
 import '../../stats/ui/stats_providers.dart';
 import '../data/just_audio_player_service.dart';
 import '../domain/player_port.dart';
+import '../domain/track_source.dart';
 
 /// The app-wide player. Tests override it with a fake [PlayerPort].
 final playerPortProvider = Provider<PlayerPort>((ref) {
   final urls = ref.read(mediaUrlsProvider);
   final service = JustAudioPlayerService(
-    resolveSource: (track) async {
-      final local = await ref.read(downloadStoreProvider)?.localPath(track.id);
-      if (local != null) return Uri.file(local);
-      return urls.stream(track.id, ref.read(qualityProvider));
-    },
+    resolveSource: (track) => resolveTrackSource(
+      track,
+      devicePath: (id) async {
+        final source = ref.read(platformServicesProvider).device?.source;
+        if (source == null) return null;
+        await source.tracks(); // loads the index on a cold start
+        return source.pathOf(id);
+      },
+      downloadPath: (id) async => ref.read(downloadStoreProvider)?.localPath(id),
+      stream: (id) => urls.stream(id, ref.read(qualityProvider)),
+    ),
     recorder: ref.read(playRecorderProvider),
     onPlay: (play) => ref.read(playsReporterProvider).record(play),
     onTrackStarted: (track) => ref.read(historyProvider.notifier).push(track),

@@ -5,6 +5,7 @@ import 'package:qodi_music/core/api/media_urls.dart';
 import 'package:qodi_music/core/config/core_providers.dart';
 import 'package:qodi_music/core/config/settings_store.dart';
 import 'package:qodi_music/core/platform/platform_services.dart';
+import 'package:qodi_music/features/device_music/domain/device_music_source.dart';
 import 'package:qodi_music/features/favorites/domain/favorites_repository.dart';
 import 'package:qodi_music/features/favorites/ui/favorites_controller.dart';
 import 'package:qodi_music/features/library/data/memory_library_cache.dart';
@@ -22,6 +23,9 @@ class FakePlayer implements PlayerPort {
   PlayerSnapshot _snap;
   final _ctrl = StreamController<PlayerSnapshot>.broadcast();
   int toggles = 0;
+
+  /// Queues passed to [playTracks] (with their start index).
+  final List<(List<Track>, int)> played = [];
 
   void _emit(PlayerSnapshot s) {
     _snap = s;
@@ -48,7 +52,10 @@ class FakePlayer implements PlayerPort {
   @override
   Future<void> pause() async => _emit(_snap.copyWith(playing: false));
   @override
-  Future<void> playTracks(List<Track> tracks, {int startIndex = 0}) async {}
+  Future<void> playTracks(List<Track> tracks, {int startIndex = 0}) async {
+    played.add((tracks, startIndex));
+    _emit(_snap.copyWith(current: tracks[startIndex], queue: tracks, queuePosition: startIndex, playing: true));
+  }
   @override
   Future<void> seek(Duration position) async {}
   @override
@@ -78,15 +85,23 @@ class NoCoverUrls implements MediaUrls {
 
 class FakeFavorites implements FavoritesRepository {
   final List<Track> items = [];
+  int listCalls = 0;
   @override
   Future<void> add(String trackId) async {}
   @override
-  Future<List<Track>> list() async => items;
+  Future<List<Track>> list() async {
+    listCalls++;
+    return items;
+  }
   @override
   Future<void> remove(String trackId) async {}
 }
 
-Future<List<Override>> baseOverrides({Map<String, Object> prefs = const {}}) async {
+Future<List<Override>> baseOverrides({
+  Map<String, Object> prefs = const {},
+  DeviceMusicServices? device,
+  FavoritesRepository? favorites,
+}) async {
   SharedPreferences.setMockInitialValues(prefs);
   final p = await SharedPreferences.getInstance();
   return [
@@ -95,9 +110,10 @@ Future<List<Override>> baseOverrides({Map<String, Object> prefs = const {}}) asy
       cache: MemoryLibraryCache(),
       outbox: PrefsPlaysOutbox(p),
       createDownloads: (_) => null,
+      device: device,
     )),
     mediaUrlsProvider.overrideWithValue(NoCoverUrls()),
-    favoritesRepositoryProvider.overrideWithValue(FakeFavorites()),
+    favoritesRepositoryProvider.overrideWithValue(favorites ?? FakeFavorites()),
     waveformProvider.overrideWith((ref, id) async => List<double>.filled(120, 0.5)),
   ];
 }

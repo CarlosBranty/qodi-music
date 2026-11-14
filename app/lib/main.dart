@@ -8,6 +8,7 @@ import 'app.dart';
 import 'core/config/core_providers.dart';
 import 'core/config/settings_store.dart';
 import 'core/platform/platform_services.dart';
+import 'features/device_music/domain/device_track.dart';
 import 'features/player/data/qodi_audio_handler.dart';
 import 'features/player/ui/player_providers.dart';
 
@@ -32,6 +33,10 @@ Future<void> main() async {
   try {
     await AudioService.init(
       builder: () => QodiAudioHandler(port, (t) {
+        if (isDeviceTrackId(t.id)) {
+          final path = platform.device?.source.coverPathOf(t.id);
+          return path == null ? null : Uri.file(path);
+        }
         final cover = urls.cover(t.id);
         return cover == null ? null : Uri.parse(cover);
       }),

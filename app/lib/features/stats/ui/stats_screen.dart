@@ -6,6 +6,8 @@ import 'package:material_ui/material_ui.dart';
 import '../../../core/theme/tokens.dart';
 import '../../../shared/format.dart';
 import '../../../shared/widgets/bento_card.dart';
+import '../../../shared/widgets/connect_server_hint.dart';
+import '../../auth/ui/auth_controller.dart';
 import '../../library/ui/track_actions.dart';
 import '../domain/stats_summary.dart';
 import 'stats_providers.dart';
@@ -15,6 +17,12 @@ class StatsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (!ref.watch(serverConnectedProvider)) {
+      return const ConnectServerHint(
+        title: 'Stats live on your server',
+        message: 'Listening stats are computed by your music server. Connect one to see them.',
+      );
+    }
     final range = ref.watch(statsRangeProvider);
     final summary = ref.watch(statsSummaryProvider);
     final text = Theme.of(context).textTheme;

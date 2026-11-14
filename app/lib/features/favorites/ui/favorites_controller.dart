@@ -18,8 +18,9 @@ final favoriteIdsProvider = Provider<Set<String>>((ref) =>
 
 class FavoritesController extends AsyncNotifier<List<Track>> {
   @override
-  Future<List<Track>> build() {
-    ref.watch(authControllerProvider);
+  Future<List<Track>> build() async {
+    // Device-only mode: server favorites are unavailable, no API call.
+    if (ref.watch(authControllerProvider) == null) return const [];
     return ref.read(favoritesRepositoryProvider).list();
   }
 

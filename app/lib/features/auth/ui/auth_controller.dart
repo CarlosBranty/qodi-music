@@ -28,6 +28,8 @@ class AuthController extends Notifier<AuthSession?> {
       await ref.read(platformServicesProvider).cache.clear();
     }
     await settings.saveSession(session);
+    // Connected to a server: leave device-only mode (device music stays).
+    if (settings.deviceOnly) await ref.read(deviceOnlyProvider.notifier).set(false);
     state = session;
   }
 
@@ -37,3 +39,23 @@ class AuthController extends Notifier<AuthSession?> {
     state = null;
   }
 }
+
+/// "Use without server" mode: no API calls, device music only. Persisted.
+final deviceOnlyProvider = NotifierProvider<DeviceOnlyController, bool>(DeviceOnlyController.new);
+
+class DeviceOnlyController extends Notifier<bool> {
+  @override
+  bool build() => ref.read(settingsStoreProvider).deviceOnly;
+
+  Future<void> set(bool value) async {
+    await ref.read(settingsStoreProvider).setDeviceOnly(value);
+    state = value;
+  }
+}
+
+/// True when the app has a server session (server sections are available).
+final serverConnectedProvider = Provider<bool>((ref) => ref.watch(authControllerProvider) != null);
+
+/// True when the user can use the app (server session or device-only mode).
+final canUseAppProvider =
+    Provider<bool>((ref) => ref.watch(serverConnectedProvider) || ref.watch(deviceOnlyProvider));

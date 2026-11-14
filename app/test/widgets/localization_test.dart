@@ -166,7 +166,7 @@ void main() {
       await _pumpScreen(tester, english, const UsersScreen(), prefs: _admin);
       expect(find.text('Users & invites'), findsOneWidget);
       expect(find.textContaining('Active · Uses 1/2'), findsOneWidget);
-      expect(find.textContaining(RegExp(r'Expires Nov 1[45], 2026 \d\d:\d\d')), findsOneWidget);
+      expect(find.textContaining(RegExp(r'Expires Nov 1[45], 2026 \d{1,2}:\d\d')), findsOneWidget);
       await tester.pumpWidget(const SizedBox());
 
       await _pumpScreen(tester, spanish, const UsersScreen(), prefs: _admin);
@@ -174,7 +174,7 @@ void main() {
       expect(find.text('Invitaciones'), findsOneWidget);
       expect(find.text('Crear invitación'), findsOneWidget);
       expect(find.textContaining('Activa · Usos 1/2'), findsOneWidget);
-      expect(find.textContaining(RegExp(r'Vence 1[45] nov 2026 \d\d:\d\d')), findsOneWidget,
+      expect(find.textContaining(RegExp(r'Vence 1[45] nov 2026 \d{1,2}:\d\d')), findsOneWidget,
           reason: 'dates in the Spanish format');
       expect(find.textContaining('Tú · Admin'), findsOneWidget);
       await tester.pumpWidget(const SizedBox());

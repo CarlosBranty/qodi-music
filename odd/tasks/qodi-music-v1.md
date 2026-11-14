@@ -10,6 +10,10 @@ Branch: `feat/qodi-music-v1` · Delivery: ask-on-risk · Runners: `cargo test` (
 - S4 UI "que tenga este interfaz el cliente": style of the two reference images — beige `#EFE6DD`, orange `#E8653F`, navy `#0F2233`, black pill nav bar, vinyl covers, bento stat cards, arc waveform seekbar with big orange play button, lyrics sheet, dark mode.
 - S5 Deploy: one Compose stack (server + web client) for Dokploy behind the existing Cloudflare tunnel; music volume read-only; songs arrive via Syncthing into the music dir.
 - S6 "ahora tambien funciona como reproductor de musica offline? paraque tome musica del propio telefono" + "Si hazlo": play music stored on the device itself. Decision (assistant default, user delegated): separate "On this device" section in Library; app usable without a server ("Use without server" on login); device tracks get local favorites/playlists; reuse the existing player. Android + Linux/Windows/macOS via folder scan; iOS limited to files imported into the app.
+- S7 "quero adicionar que la app tenga un ecualizador" — equalizer (Android/iOS/macOS where the audio engine supports it; hidden elsewhere), presets + per-band gains, persisted.
+- S8 "que se sea cuando una cancionesta preparado par aoffline o fue descargada" — clear offline/downloaded indicator on track rows, covers, Now Playing, album/playlist headers.
+- S9 "que tenga tambien opcion al interfaz con todo en espa;ol" — English + Spanish UI, follows the device language, manual selector in Settings.
+- S10 "es psible para que tenga un autoupdater? o no es psible en apk?" — Android self-update: CI builds signed APK, server publishes it, app checks/downloads/prompts install. Pending user decision on storing the keystore as a GitHub secret.
 
 ## Tasks
 
@@ -19,6 +23,9 @@ Branch: `feat/qodi-music-v1` · Delivery: ask-on-risk · Runners: `cargo test` (
 | T2 | S3, S4 | delegated (writer trigger a: parallel with T1, disjoint `app/**`) | done — analyze clean, 36 tests, linux+web builds | beae5bd |
 | T3 | S1, S5 | inline (Dockerfile, compose, README) | done — docker build NOT run (no Docker locally) | e605f83, eeb94f9 |
 | T5 | S6 | delegated (context backstop: unfamiliar 12k-line app/; reading prepares the write) | done — analyze clean, 74 tests, linux+web builds, Linux smoke scanned 3 FLAC | a925f62 |
+| T6 | S7, S8 | delegated (context backstop; player + UI of the 14k-line app) | in progress | |
+| T7 | S9 | delegated after T6 (touches every UI string) | pending | |
+| T8 | S10 | pending decision | pending | |
 | T4 | S2 | independent verifier — Risk item 2 (auth/token handling) | done — 0 blockers, 6 advisories (2 fixed) | see HEAD |
 
 ## Log
@@ -29,3 +36,5 @@ Branch: `feat/qodi-music-v1` · Delivery: ask-on-risk · Runners: `cargo test` (
 - L4 Seam check: server serves the web build at `/` with SPA fallback; plays/playlists payloads from the app accepted. Pending: `docker compose build`, Android APK, real-device background playback test.
 - L5 (2026-11-13) "ok ahora tambien funciona como reproductor de musica offline? paraque tome musica del propio telefono" → verified: not supported (no storage permission, no device source, login required). User: "Si hazlo" (did not pick mixed vs separate; assistant chose separate section).
 - L6 T5 done: Dart folder scan (audio_metadata_reader), drift schema v2 additive only (verified CREATE-only diff + migration test). Untested on device: Android permission/folder picker, iOS import, macOS sandbox bookmarks.
+- L7 (2026-11-14) Web bug "a pesar que cambio de cancion ... me reproduce la misma cancion" reproduced in headless Firefox: just_audio_web reused its cached playlist; fixed with stop() before load on web (RED/GREEN test).
+- L8 (2026-11-14) "Listo quero adicionar que la app tenga un ecualizador, que se sea cuando una cancionesta preparado par aoffline o fue descargada, y que tenga tambien opcion al interfaz con todo en espa;ol, es psible para que tenga un autoupdater? o no es psible en apk?"

@@ -1,8 +1,14 @@
 # syntax=docker/dockerfile:1
 
 # ---- Flutter web client ----
-ARG FLUTTER_IMAGE=ghcr.io/cirruslabs/flutter:3.50.0
-FROM ${FLUTTER_IMAGE} AS web
+FROM debian:trixie-slim AS web
+ARG FLUTTER_VERSION=3.50.0
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends git curl unzip xz-utils ca-certificates \
+ && rm -rf /var/lib/apt/lists/* \
+ && git clone --depth 1 --branch ${FLUTTER_VERSION} https://github.com/flutter/flutter.git /opt/flutter
+ENV PATH=/opt/flutter/bin:$PATH
+RUN flutter config --no-analytics --enable-web >/dev/null && flutter precache --web
 WORKDIR /src/app
 COPY app/pubspec.yaml app/pubspec.lock* ./
 RUN flutter pub get

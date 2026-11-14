@@ -64,7 +64,7 @@ void main() {
   testWidgets('rejects a server URL without scheme', (tester) async {
     await pumpLogin(tester);
     await tester.enterText(find.byKey(const Key('login-server')), 'nas.local:4040');
-    await tester.enterText(find.byKey(const Key('login-username')), 'sajra');
+    await tester.enterText(find.byKey(const Key('login-username')), 'alice');
     await tester.enterText(find.byKey(const Key('login-password')), 'pw');
     await submit(tester);
     expect(find.text('Use a full URL like http://192.168.1.10:4040'), findsOneWidget);
@@ -75,13 +75,13 @@ void main() {
   testWidgets('valid form logs in and persists the session', (tester) async {
     await pumpLogin(tester);
     await tester.enterText(find.byKey(const Key('login-server')), 'http://nas.local:4040');
-    await tester.enterText(find.byKey(const Key('login-username')), 'sajra');
+    await tester.enterText(find.byKey(const Key('login-username')), 'alice');
     await tester.enterText(find.byKey(const Key('login-password')), 'secret');
     await submit(tester);
     expect(gateway.calls, [
-      ['http://nas.local:4040', 'sajra', 'secret']
+      ['http://nas.local:4040', 'alice', 'secret']
     ]);
-    expect(container.read(authControllerProvider)?.user.username, 'sajra');
+    expect(container.read(authControllerProvider)?.user.username, 'alice');
     expect(container.read(settingsStoreProvider).token, 'jwt');
     await tester.pumpWidget(const SizedBox());
   });
@@ -90,7 +90,7 @@ void main() {
     await pumpLogin(tester);
     gateway.reject = true;
     await tester.enterText(find.byKey(const Key('login-server')), 'http://nas.local:4040');
-    await tester.enterText(find.byKey(const Key('login-username')), 'sajra');
+    await tester.enterText(find.byKey(const Key('login-username')), 'alice');
     await tester.enterText(find.byKey(const Key('login-password')), 'bad');
     await submit(tester);
     expect(find.text('Wrong username or password'), findsOneWidget);

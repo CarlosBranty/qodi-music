@@ -21,12 +21,12 @@ import '../support/fakes.dart';
 import '../support/fixtures.dart';
 import '../support/l10n.dart';
 
-const _admin = {'server_url': 'http://nas:4040', 'token': 'tok', 'user_id': 'u1', 'username': 'sajra', 'is_admin': true};
+const _admin = {'server_url': 'http://nas:4040', 'token': 'tok', 'user_id': 'u1', 'username': 'alice', 'is_admin': true};
 
 final _adminRoutes = {
   'GET /api/v1/admin/users': const FakeResponse(200, {
     'items': [
-      {'id': 'u1', 'username': 'sajra', 'is_admin': true, 'created_at': '2026-11-01T10:00:00Z'},
+      {'id': 'u1', 'username': 'alice', 'is_admin': true, 'created_at': '2026-11-01T10:00:00Z'},
     ],
     'total': 1
   }),

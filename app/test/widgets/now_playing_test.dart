@@ -18,7 +18,7 @@ void main() {
     final overrides = await baseOverrides(prefs: {
       'server_url': 'http://nas:4040',
       'token': 'tok',
-      'username': 'sajra',
+      'username': 'alice',
     });
     await tester.pumpWidget(ProviderScope(
       overrides: [...overrides, playerOverride(player)],

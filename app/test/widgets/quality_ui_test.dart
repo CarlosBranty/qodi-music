@@ -10,7 +10,7 @@ import '../support/fakes.dart';
 import '../support/fixtures.dart';
 import '../support/l10n.dart';
 
-const _session = {'server_url': 'http://nas:4040', 'token': 'tok', 'username': 'sajra'};
+const _session = {'server_url': 'http://nas:4040', 'token': 'tok', 'username': 'alice'};
 final _hiRes = track('t1',
     title: 'Semestre de Otoño',
     artist: 'José Madero',

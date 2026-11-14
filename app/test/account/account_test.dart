@@ -18,8 +18,8 @@ FakeResponse _err(int status, String code) => FakeResponse(status, {
 void main() {
   group('client-side validation mirrors the contract', () {
     test('username: lowercased, ^[a-z0-9_.-]{3,32}\$', () {
-      expect(validateUsername('Sajra.Music_1'), isNull);
-      expect(normalizeUsername('  Sajra '), 'sajra');
+      expect(validateUsername('Alice.Music_1'), isNull);
+      expect(normalizeUsername('  Alice '), 'alice');
       expect(validateUsername(''), AccountError.enterUsername);
       expect(validateUsername('ab'), AccountError.usernameRule);
       expect(validateUsername('a' * 33), AccountError.usernameRule);
@@ -122,7 +122,7 @@ void main() {
       final a = api({
         'GET /api/v1/admin/users': const FakeResponse(200, {
           'items': [
-            {'id': 'u1', 'username': 'sajra', 'is_admin': true, 'created_at': '2026-11-01T10:00:00Z'},
+            {'id': 'u1', 'username': 'alice', 'is_admin': true, 'created_at': '2026-11-01T10:00:00Z'},
             {'id': 'u2', 'username': 'ana', 'is_admin': false, 'created_at': '2026-11-02T10:00:00Z'},
           ],
           'total': 2
@@ -139,7 +139,7 @@ void main() {
         'DELETE /api/v1/admin/users/u2': const FakeResponse(204),
       });
       final users = await a.users();
-      expect(users.map((u) => (u.username, u.isAdmin)), [('sajra', true), ('ana', false)]);
+      expect(users.map((u) => (u.username, u.isAdmin)), [('alice', true), ('ana', false)]);
       final invites = await a.invites();
       expect((invites.single.code, invites.single.uses, invites.single.maxUses), ('K7Q2MX9RTA4P', 1, 2));
       expect(invites.single.expiresAt, DateTime.utc(2026, 11, 16, 20, 15));
@@ -160,14 +160,14 @@ void main() {
         }),
         'POST /api/v1/auth/login': const FakeResponse(200, {
           'token': 'jwt2',
-          'user': {'id': 'u1', 'username': 'sajra', 'is_admin': true}
+          'user': {'id': 'u1', 'username': 'alice', 'is_admin': true}
         }),
       });
       final auth = AuthApi(adapter: http);
       final s = await auth.register('http://nas:4040/', 'K7Q2MX9RTA4P', 'ana', 'secret123');
       expect(http.bodies.single, {'invite_code': 'K7Q2MX9RTA4P', 'username': 'ana', 'password': 'secret123'});
       expect((s.serverUrl, s.token, s.user.id, s.user.isAdmin), ('http://nas:4040', 'jwt', 'u9', false));
-      final admin = await auth.login('http://nas:4040', 'sajra', 'pw');
+      final admin = await auth.login('http://nas:4040', 'alice', 'pw');
       expect(admin.user.isAdmin, isTrue);
     });
 

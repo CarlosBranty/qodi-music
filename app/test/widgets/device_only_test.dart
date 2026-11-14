@@ -81,9 +81,9 @@ void main() {
   });
 
   testWidgets('a stored session still opens Home (previous behavior)', (tester) async {
-    await pumpApp(tester, prefs: {'server_url': 'http://nas:4040', 'token': 'tok', 'username': 'sajra'});
+    await pumpApp(tester, prefs: {'server_url': 'http://nas:4040', 'token': 'tok', 'username': 'alice'});
     expect(find.text('Welcome back,'), findsOneWidget);
-    expect(find.text('sajra'), findsOneWidget);
+    expect(find.text('alice'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
   });
 

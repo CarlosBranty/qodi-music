@@ -12,7 +12,7 @@ import '../support/fake_device.dart';
 import '../support/fakes.dart';
 import '../support/fixtures.dart';
 
-const session = {'server_url': 'http://nas:4040', 'token': 'tok', 'username': 'sajra', 'user_id': 'u1'};
+const session = {'server_url': 'http://nas:4040', 'token': 'tok', 'username': 'alice', 'user_id': 'u1'};
 
 class CountingPlaylists implements PlaylistRepository {
   int lists = 0;
@@ -51,7 +51,7 @@ void main() {
   test('settings store keeps the session and history (previous behavior)', () async {
     final (c, _, _) = await make(session);
     final store = c.read(settingsStoreProvider);
-    expect(store.session?.user.username, 'sajra');
+    expect(store.session?.user.username, 'alice');
     await store.pushHistory(track('a'));
     expect(store.history.single.id, 'a');
     expect(store.deviceOnly, isFalse);
@@ -70,7 +70,7 @@ void main() {
   test('logging in leaves device-only mode', () async {
     final (c, _, _) = await make(const {'device_only': true});
     expect(c.read(deviceOnlyProvider), isTrue);
-    await c.read(authControllerProvider.notifier).login('http://nas:4040', 'sajra', 'pw');
+    await c.read(authControllerProvider.notifier).login('http://nas:4040', 'alice', 'pw');
     expect(c.read(settingsStoreProvider).deviceOnly, isFalse);
     expect(c.read(deviceOnlyProvider), isFalse);
     expect(c.read(serverConnectedProvider), isTrue);

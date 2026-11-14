@@ -10,7 +10,7 @@ import 'package:qodi_music/features/settings/ui/settings_screen.dart';
 import '../support/fakes.dart';
 import '../support/l10n.dart';
 
-const _session = {'server_url': 'http://nas:4040', 'token': 'tok', 'username': 'sajra'};
+const _session = {'server_url': 'http://nas:4040', 'token': 'tok', 'username': 'alice'};
 
 Future<ProviderContainer> _pump(WidgetTester tester, Widget home, FakeEqualizer eq) async {
   tester.view.physicalSize = const Size(1080, 2340);

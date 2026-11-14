@@ -26,9 +26,9 @@ Branch: `feat/qodi-music-v1` · Delivery: ask-on-risk · Runners: `cargo test` (
 | T3 | S1, S5 | inline (Dockerfile, compose, README) | done — docker build NOT run (no Docker locally) | e605f83, eeb94f9 |
 | T5 | S6 | delegated (context backstop: unfamiliar 12k-line app/; reading prepares the write) | done — analyze clean, 74 tests, linux+web builds, Linux smoke scanned 3 FLAC | a925f62 |
 | T6 | S7, S8 | delegated (context backstop; player + UI of the 14k-line app) | done — 102 tests, web/linux/apk builds; EQ Android-only | 3db2330 |
-| T9 | S11, S12 (server) | delegated (writer trigger a: parallel with T6, disjoint `server/**`) | in progress | |
+| T9 | S11, S12 (server) | delegated (writer trigger a: parallel with T6, disjoint `server/**`) | done — 36 tests, clippy clean; also S10 endpoints | 8847303 |
 | T10 | S11, S12 (app) + in-app logo | delegated after T6 | pending | |
-| T11 | S12 | independent verifier — Risk item 2 (registration/admin authz) | pending | |
+| T11 | S12 | independent verifier — Risk items 1, 2 | done — 0 blockers, 6 advisories (2 fixed) | HEAD |
 | T7 | S9 | delegated after T6 (touches every UI string) | pending | |
 | T8 | S10 | CI inline (272cfc0); server endpoint in T9; app part in T10 | in progress | |
 | T4 | S2 | independent verifier — Risk item 2 (auth/token handling) | done — 0 blockers, 6 advisories (2 fixed) | see HEAD |
@@ -45,3 +45,4 @@ Branch: `feat/qodi-music-v1` · Delivery: ask-on-risk · Runners: `cargo test` (
 - L8 (2026-11-14) "Listo quero adicionar que la app tenga un ecualizador, que se sea cuando una cancionesta preparado par aoffline o fue descargada, y que tenga tambien opcion al interfaz con todo en espa;ol, es psible para que tenga un autoupdater? o no es psible en apk?"
 - L9 (2026-11-14) "tambien que se muestre que calidad tiene cada cancion, y se puede registrar mas usuarios? deberia si alguien quiere unirse a escuchar" → verified: no registration endpoint; quality only format+bitrate. Contract extended (docs/api.md).
 - L10 (2026-11-14) User chose option A: keystore stored as GitHub secrets (ANDROID_KEYSTORE_BASE64/PASSWORD/KEY_ALIAS).
+- L11 T11: upgrade from 1f7bdf4 and 36672c3 DBs verified lossless; fixed advisories: invite pre-check before argon2, case-insensitive revoke. Open: password change does not revoke tokens; bootstrap exact-case match.

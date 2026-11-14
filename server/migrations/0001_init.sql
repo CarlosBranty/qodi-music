@@ -73,10 +73,11 @@ CREATE TABLE playlist_tracks (
 );
 
 CREATE TABLE plays (
-    client_id   TEXT PRIMARY KEY,
+    client_id   TEXT NOT NULL,
     user_id     TEXT NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     track_id    TEXT NOT NULL,
     played_at   INTEGER NOT NULL,
-    listened_ms INTEGER NOT NULL
+    listened_ms INTEGER NOT NULL,
+    PRIMARY KEY (user_id, client_id)
 );
 CREATE INDEX plays_user_time ON plays (user_id, played_at);

@@ -55,6 +55,7 @@ impl App {
     pub async fn build(config: Config) -> Result<Self> {
         let opus_dir = config.data_dir.join("cache").join("opus");
         std::fs::create_dir_all(&opus_dir).with_context(|| format!("create {}", opus_dir.display()))?;
+        restrict_permissions(&config.data_dir);
 
         let store = SqliteStore::open(&config.data_dir).await?;
         let secret = load_or_create_secret(&config.data_dir, config.jwt_secret.as_deref())?;
@@ -117,4 +118,15 @@ async fn bootstrap_admin(store: &SqliteStore, config: &Config) -> Result<()> {
     store.create_user(username, &hash, now_ms()).await?;
     tracing::info!(%username, "created admin user");
     Ok(())
+}
+
+/// The data dir holds password hashes and the signing secret: keep it owner-only.
+fn restrict_permissions(dir: &std::path::Path) {
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        if let Err(err) = std::fs::set_permissions(dir, std::fs::Permissions::from_mode(0o700)) {
+            tracing::warn!(dir = %dir.display(), %err, "could not restrict data dir permissions");
+        }
+    }
 }

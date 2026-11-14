@@ -29,7 +29,7 @@ Branch: `feat/qodi-music-v1` · Delivery: ask-on-risk · Runners: `cargo test` (
 | T9 | S11, S12 (server) | delegated (writer trigger a: parallel with T6, disjoint `server/**`) | done — 36 tests, clippy clean; also S10 endpoints | 8847303 |
 | T10 | S10 (app), S11, S12 (app) + in-app logo | delegated after T6 | done — 170 tests, web/linux/apk builds | fe44887 |
 | T11 | S12 | independent verifier — Risk items 1, 2 | done — 0 blockers, 6 advisories (2 fixed) | HEAD |
-| T7 | S9 | delegated after T10 (touches every UI string) | in progress | |
+| T7 | S9 | delegated after T10 (touches every UI string) | done — 328 keys, 189 tests, web/linux/apk builds | 12ce05d |
 | T8 | S10 | CI inline (272cfc0); server endpoint in T9; app part in T10 | done — pending real-device install test | 272cfc0 |
 | T4 | S2 | independent verifier — Risk item 2 (auth/token handling) | done — 0 blockers, 6 advisories (2 fixed) | see HEAD |
 

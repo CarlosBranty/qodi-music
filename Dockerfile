@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # ---- Flutter web client ----
-ARG FLUTTER_IMAGE=ghcr.io/cirruslabs/flutter:stable
+ARG FLUTTER_IMAGE=ghcr.io/cirruslabs/flutter:3.50.0
 FROM ${FLUTTER_IMAGE} AS web
 WORKDIR /src/app
 COPY app/pubspec.yaml app/pubspec.lock* ./

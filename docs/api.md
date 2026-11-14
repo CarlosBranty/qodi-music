@@ -8,7 +8,9 @@ Contract between `server/` (Rust) and `app/` (Flutter). Both sides MUST follow i
 - Auth: every endpoint except `GET /health` and `POST /auth/login` requires a JWT, sent as
   `Authorization: Bearer <token>` **or** as query parameter `?token=<token>` (needed by `<audio>`/`<img>` on web).
 - Errors: non-2xx responses return `{"error": {"code": "<snake_case>", "message": "<human text>"}}`.
-  Codes: `unauthorized` (401), `invalid_credentials` (401), `not_found` (404), `bad_request` (400), `internal` (500).
+  Codes: `unauthorized` (401), `invalid_credentials` (401), `forbidden` (403), `not_found` (404), `bad_request` (400),
+  `invalid_invite` (400), `username_taken` (409), `internal` (500).
+- Admin endpoints (`/admin/*`) require a user with `is_admin: true`; others get 403 `forbidden`.
 - Lists return `{"items": [...], "total": <int>}`. Pagination: `limit` (default 100, max 1000) and `offset` (default 0).
 - IDs are lowercase hex strings, stable across rescans:
   - track id = first 16 hex chars of SHA-256 of the file path relative to the music dir (forward slashes).
@@ -25,6 +27,7 @@ Contract between `server/` (Rust) and `app/` (Flutter). Both sides MUST follow i
   "artist": "José Madero", "artist_id": "…", "album": "Querido", "album_id": "…",
   "album_artist": "José Madero", "track_number": 3, "disc_number": 1, "year": 2023,
   "genre": "Pop", "duration_ms": 214000, "format": "flac", "bitrate_kbps": 900,
+  "sample_rate_hz": 44100, "bit_depth": 16, "channels": 2, "lossless": true,
   "size_bytes": 25000000, "has_cover": true, "has_lyrics": false,
   "favorite": false, "updated_at": "2026-11-13T20:15:00Z"
 }
@@ -33,12 +36,16 @@ Contract between `server/` (Rust) and `app/` (Flutter). Both sides MUST follow i
   "track_count": 12, "duration_ms": 2600000, "cover_track_id": "9f2c1a7b3d4e5f60" }
 // Artist
 { "id": "…", "name": "José Madero", "album_count": 3, "track_count": 36 }
+// User
+{ "id": "…", "username": "sajra", "is_admin": true }
+// Invite — `code` is 12 random chars from [A-Z2-9] (no 0/O/1/I)
+{ "code": "K7Q2MX9RTA4P", "created_at": "…", "expires_at": "…", "max_uses": 1, "uses": 0 }
 // Playlist
 { "id": "…", "name": "Night drive", "track_count": 20, "duration_ms": 4300000,
   "cover_track_id": "…", "created_at": "…", "updated_at": "…" }
 ```
 
-Nullable fields: `track_number`, `disc_number`, `year`, `genre`, `bitrate_kbps`, `album.year`,
+Nullable fields: `track_number`, `disc_number`, `year`, `genre`, `bitrate_kbps`, `sample_rate_hz`, `bit_depth` (null for lossy codecs), `channels`, `album.year`,
 `album.cover_track_id`, `playlist.cover_track_id`.
 
 ## Endpoints
@@ -46,8 +53,15 @@ Nullable fields: `track_number`, `disc_number`, `year`, `genre`, `bitrate_kbps`,
 | Method | Path | Body / query | Response |
 |---|---|---|---|
 | GET | `/health` | – | `{"status":"ok","version":"0.1.0"}` |
-| POST | `/auth/login` | `{"username","password"}` | `{"token","user":{"id","username"}}` · 401 `invalid_credentials` |
-| GET | `/me` | – | `{"id","username"}` |
+| POST | `/auth/login` | `{"username","password"}` | `{"token","user":User}` · 401 `invalid_credentials` |
+| POST | `/auth/register` | `{"invite_code","username","password"}` | 201 `{"token","user":User}` · 400 `invalid_invite` (unknown, expired or used up) · 409 `username_taken` · 400 `bad_request` (username must match `^[a-z0-9_.-]{3,32}$` after lowercasing; password 8–128 chars) |
+| GET | `/me` | – | User |
+| PUT | `/me/password` | `{"current_password","new_password"}` | 204 · 401 `invalid_credentials` · 400 `bad_request` |
+| GET | `/admin/users` | – | list of `{"id","username","is_admin","created_at"}` (sorted created_at) |
+| DELETE | `/admin/users/{id}` | – | 204 · 400 `bad_request` when deleting yourself · 404. Deletes the user's playlists, favorites and plays; their tokens stop working immediately |
+| POST | `/admin/invites` | `{"expires_in_hours"?: int (1–720, default 72), "max_uses"?: int (1–50, default 1)}` | 201 Invite |
+| GET | `/admin/invites` | – | list of Invite (newest first; includes expired/used) |
+| DELETE | `/admin/invites/{code}` | – | 204 (revokes) · 404 |
 | GET | `/tracks` | `q`, `artist_id`, `album_id`, `limit`, `offset` | list of Track (sorted artist, album, disc, track, title). `q` matches title/artist/album, case-insensitive |
 | GET | `/tracks/{id}` | – | Track |
 | GET | `/tracks/{id}/stream` | `format=original\|opus` (default `original`), `bitrate=64\|96\|128\|192` (default 128, opus only) | audio bytes. **Must honor `Range`** (206 + `Content-Range`, `Accept-Ranges: bytes`) for both formats. Opus is transcoded once with ffmpeg into the data cache (`audio/ogg`) |
@@ -82,6 +96,7 @@ Nullable fields: `track_number`, `disc_number`, `year`, `genre`, `bitrate_kbps`,
 
 ## Server behavior
 
+- Audio quality: `sample_rate_hz`, `bit_depth`, `channels` come from the file properties; `lossless` is true for flac, wav, alac/m4a-alac and other lossless codecs. Existing libraries are re-read once after upgrading so these fields get filled.
 - Supported files: `mp3, flac, ogg, opus, m4a, aac, wav`.
 - Library is scanned at startup, on filesystem changes (debounced watcher), every `QODI_SCAN_INTERVAL_SECS`, and on `POST /library/scan`.
 - Removed files become tombstones reported by `/library/changes` as `removed_track_ids`.
@@ -97,5 +112,5 @@ Nullable fields: `track_number`, `disc_number`, `year`, `genre`, `bitrate_kbps`,
 | `QODI_WEB_DIR` | `/app/web` | Flutter web build (optional) |
 | `QODI_JWT_SECRET` | generated and persisted in data dir | token signing secret |
 | `QODI_TOKEN_TTL_DAYS` | `30` | token lifetime |
-| `QODI_ADMIN_USER` / `QODI_ADMIN_PASSWORD` | – | creates this user on startup when it does not exist |
+| `QODI_ADMIN_USER` / `QODI_ADMIN_PASSWORD` | – | creates this user on startup when it does not exist, and always ensures it is admin (never resets its password) |
 | `QODI_SCAN_INTERVAL_SECS` | `3600` | periodic full rescan |

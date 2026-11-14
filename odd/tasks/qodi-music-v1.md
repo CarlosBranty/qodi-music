@@ -14,6 +14,8 @@ Branch: `feat/qodi-music-v1` · Delivery: ask-on-risk · Runners: `cargo test` (
 - S8 "que se sea cuando una cancionesta preparado par aoffline o fue descargada" — clear offline/downloaded indicator on track rows, covers, Now Playing, album/playlist headers.
 - S9 "que tenga tambien opcion al interfaz con todo en espa;ol" — English + Spanish UI, follows the device language, manual selector in Settings.
 - S10 "es psible para que tenga un autoupdater? o no es psible en apk?" — Android self-update: CI builds signed APK, server publishes it, app checks/downloads/prompts install. Pending user decision on storing the keystore as a GitHub secret.
+- S11 "tambien que se muestre que calidad tiene cada cancion" — per-track quality (format, bitrate, sample rate, bit depth, lossless/Hi-Res badge) from server fields.
+- S12 "se puede registrar mas usuarios? deberia si alguien quiere unirse a escuchar" — invite-based registration, admin user/invite management, change password. Decision (assistant default): invite codes, no open signup.
 
 ## Tasks
 
@@ -24,6 +26,9 @@ Branch: `feat/qodi-music-v1` · Delivery: ask-on-risk · Runners: `cargo test` (
 | T3 | S1, S5 | inline (Dockerfile, compose, README) | done — docker build NOT run (no Docker locally) | e605f83, eeb94f9 |
 | T5 | S6 | delegated (context backstop: unfamiliar 12k-line app/; reading prepares the write) | done — analyze clean, 74 tests, linux+web builds, Linux smoke scanned 3 FLAC | a925f62 |
 | T6 | S7, S8 | delegated (context backstop; player + UI of the 14k-line app) | in progress | |
+| T9 | S11, S12 (server) | delegated (writer trigger a: parallel with T6, disjoint `server/**`) | in progress | |
+| T10 | S11, S12 (app) + in-app logo | delegated after T6 | pending | |
+| T11 | S12 | independent verifier — Risk item 2 (registration/admin authz) | pending | |
 | T7 | S9 | delegated after T6 (touches every UI string) | pending | |
 | T8 | S10 | pending decision | pending | |
 | T4 | S2 | independent verifier — Risk item 2 (auth/token handling) | done — 0 blockers, 6 advisories (2 fixed) | see HEAD |
@@ -38,3 +43,4 @@ Branch: `feat/qodi-music-v1` · Delivery: ask-on-risk · Runners: `cargo test` (
 - L6 T5 done: Dart folder scan (audio_metadata_reader), drift schema v2 additive only (verified CREATE-only diff + migration test). Untested on device: Android permission/folder picker, iOS import, macOS sandbox bookmarks.
 - L7 (2026-11-14) Web bug "a pesar que cambio de cancion ... me reproduce la misma cancion" reproduced in headless Firefox: just_audio_web reused its cached playlist; fixed with stop() before load on web (RED/GREEN test).
 - L8 (2026-11-14) "Listo quero adicionar que la app tenga un ecualizador, que se sea cuando una cancionesta preparado par aoffline o fue descargada, y que tenga tambien opcion al interfaz con todo en espa;ol, es psible para que tenga un autoupdater? o no es psible en apk?"
+- L9 (2026-11-14) "tambien que se muestre que calidad tiene cada cancion, y se puede registrar mas usuarios? deberia si alguien quiere unirse a escuchar" → verified: no registration endpoint; quality only format+bitrate. Contract extended (docs/api.md).

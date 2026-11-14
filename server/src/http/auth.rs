@@ -8,7 +8,7 @@ use super::error::{ApiError, ApiResult};
 use super::extract::{ApiJson, AuthUser};
 use crate::app::AppState;
 use crate::auth::{
-    Credentials, RegisterOutcome, User, UserRepository, check_password, hash_password_async, normalize_username,
+    Credentials, InviteRepository, RegisterOutcome, User, UserRepository, check_password, hash_password_async, normalize_username,
     valid_password,
 };
 use crate::time::now_ms;
@@ -65,8 +65,12 @@ pub async fn register(
     if !valid_password(&body.password) {
         return Err(ApiError::bad_request(PASSWORD_RULE));
     }
-    let hash = hash_password_async(body.password).await?;
     let code = body.invite_code.trim().to_uppercase();
+    // Reject bad invites before paying for an argon2 hash; `register` re-checks atomically.
+    if !state.store.invite_usable(&code, now_ms()).await? {
+        return Err(ApiError::invalid_invite());
+    }
+    let hash = hash_password_async(body.password).await?;
     match state.store.register(&code, &username, &hash, now_ms()).await? {
         RegisterOutcome::Created(user) => {
             tracing::info!(username = %user.username, "registered user");

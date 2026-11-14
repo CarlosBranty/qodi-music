@@ -84,7 +84,7 @@ pub async fn delete_invite(
     _admin: AdminUser,
     Path(code): Path<String>,
 ) -> ApiResult<StatusCode> {
-    if !state.store.delete_invite(&code).await? {
+    if !state.store.delete_invite(&code.trim().to_uppercase()).await? {
         return Err(ApiError::not_found("invite"));
     }
     Ok(StatusCode::NO_CONTENT)

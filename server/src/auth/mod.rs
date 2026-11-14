@@ -98,6 +98,8 @@ pub trait InviteRepository: Send + Sync {
     fn invites(&self) -> impl Future<Output = Result<Vec<Invite>>> + Send;
     /// `false` if unknown.
     fn delete_invite(&self, code: &str) -> impl Future<Output = Result<bool>> + Send;
+    /// Cheap pre-check (not a reservation): the invite exists, is unexpired and has uses left.
+    fn invite_usable(&self, code: &str, now_ms: i64) -> impl Future<Output = Result<bool>> + Send;
 }
 
 pub const INVITE_ALPHABET: &[u8] = b"ABCDEFGHJKLMNPQRSTUVWXYZ23456789";

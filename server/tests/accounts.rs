@@ -339,6 +339,12 @@ async fn admin_manages_users_and_invites() {
     let (status, body) = register(router, code, "late", "password-123").await;
     assert_eq!(status, StatusCode::BAD_REQUEST);
     assert_error(&body, "invalid_invite");
+
+    // Revocation accepts the code in any case, like registration does.
+    let invite = create_invite(&env, json!({})).await;
+    let lower = invite["code"].as_str().unwrap().to_lowercase();
+    let (status, _) = env.send("DELETE", &format!("/api/v1/admin/invites/{lower}"), None).await;
+    assert_eq!(status, StatusCode::NO_CONTENT);
 }
 
 #[tokio::test]

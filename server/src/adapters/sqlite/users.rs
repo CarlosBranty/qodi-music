@@ -138,4 +138,13 @@ impl InviteRepository for SqliteStore {
         let result = sqlx::query("DELETE FROM invites WHERE code = ?1").bind(code).execute(&self.pool).await?;
         Ok(result.rows_affected() > 0)
     }
+
+    async fn invite_usable(&self, code: &str, now_ms: i64) -> Result<bool> {
+        let row = sqlx::query("SELECT 1 FROM invites WHERE code = ?1 AND uses < max_uses AND expires_at > ?2")
+            .bind(code)
+            .bind(now_ms)
+            .fetch_optional(&self.pool)
+            .await?;
+        Ok(row.is_some())
+    }
 }

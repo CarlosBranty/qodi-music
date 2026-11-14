@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../../core/theme/tokens.dart';
 import '../../../shared/widgets/vinyl_cover.dart';
+import '../../downloads/ui/offline_status.dart';
 import 'player_providers.dart';
 
 /// Compact player shown above the nav bar while something is loaded.
@@ -34,12 +35,17 @@ class MiniPlayer extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(10, 8, 6, 6),
                 child: Row(
                   children: [
-                    VinylCover(
-                      seed: track.albumId,
-                      trackId: track.hasCover ? track.id : null,
-                      size: 46,
-                      spinning: snap.playing,
-                      labelFraction: 0.55,
+                    OfflineCoverBadge(
+                      trackId: track.id,
+                      badgeSize: 16,
+                      inset: 0,
+                      child: VinylCover(
+                        seed: track.albumId,
+                        trackId: track.hasCover ? track.id : null,
+                        size: 46,
+                        spinning: snap.playing,
+                        labelFraction: 0.55,
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(

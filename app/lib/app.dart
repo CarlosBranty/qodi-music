@@ -5,6 +5,7 @@ import 'core/config/settings_store.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/ui/auth_controller.dart';
+import 'features/equalizer/ui/equalizer_controller.dart';
 import 'features/library/ui/library_providers.dart';
 import 'features/stats/ui/stats_providers.dart';
 import 'core/config/core_providers.dart';
@@ -51,6 +52,9 @@ class _QodiAppState extends ConsumerState<QodiApp> {
     ref.listen(authControllerProvider, (prev, next) {
       if (prev == null && next != null) _backgroundSync();
     });
+    // Keeps the equalizer alive so saved settings are applied on start and
+    // as soon as the engine reports its bands.
+    ref.listen(equalizerControllerProvider, (_, _) {});
     final router = ref.watch(appRouterProvider);
     final pref = ref.watch(themePreferenceProvider);
     return MaterialApp.router(

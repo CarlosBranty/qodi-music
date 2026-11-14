@@ -10,6 +10,7 @@ import '../../../shared/widgets/cover_art.dart';
 import '../../device_music/domain/device_track.dart';
 import '../../device_music/ui/device_playlist_picker.dart';
 import '../../downloads/ui/downloads_controller.dart';
+import '../../downloads/ui/offline_status.dart';
 import '../../player/ui/player_providers.dart';
 import '../../playlists/ui/playlist_picker.dart';
 import '../domain/entities.dart';
@@ -45,6 +46,9 @@ class CollectionHeader extends ConsumerWidget {
     final player = ref.read(playerPortProvider);
     // Device collections use local playlists and cannot be downloaded.
     final device = tracks.isNotEmpty && tracks.every((t) => isDeviceTrackId(t.id));
+    final showOffline = downloads.supported && !device;
+    final offline = showOffline ? OfflineSummary.of(tracks, ref.watch(downloadsControllerProvider)) : null;
+    final offlineLabel = offline?.label;
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
       child: Column(
@@ -56,6 +60,19 @@ class CollectionHeader extends ConsumerWidget {
               style: text.headlineSmall?.copyWith(fontWeight: FontWeight.w800)),
           const SizedBox(height: 4),
           Text(subtitle, textAlign: TextAlign.center, style: TextStyle(color: c.textMuted)),
+          if (offlineLabel != null) ...[
+            const SizedBox(height: 8),
+            Row(
+              key: const Key('collection-offline'),
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const OfflineBadge(size: 16),
+                const SizedBox(width: 6),
+                Text(offlineLabel,
+                    style: const TextStyle(color: QodiTokens.orange, fontWeight: FontWeight.w700, fontSize: 13)),
+              ],
+            ),
+          ],
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -85,17 +102,27 @@ class CollectionHeader extends ConsumerWidget {
                         : showPlaylistPicker(context, ref, tracks),
                 icon: const Icon(Icons.playlist_add_rounded),
               ),
-              if (downloads.supported && !device)
-                IconButton.filledTonal(
-                  tooltip: 'Download all',
-                  onPressed: tracks.isEmpty
-                      ? null
-                      : () {
-                          showSnack(context, 'Downloading ${songsLabel(tracks.length).toLowerCase()}');
-                          downloads.downloadAll(tracks);
-                        },
-                  icon: const Icon(Icons.download_rounded),
-                ),
+              if (offline != null)
+                offline.downloading > 0
+                    ? Padding(
+                        key: const Key('collection-download-progress'),
+                        padding: const EdgeInsets.all(8),
+                        child: SizedBox.square(
+                          dimension: 32,
+                          child: CircularProgressIndicator(
+                              value: offline.progress, strokeWidth: 3, color: QodiTokens.orange),
+                        ),
+                      )
+                    : IconButton.filledTonal(
+                        tooltip: offline.complete ? OfflineStrings.downloaded : 'Download all',
+                        onPressed: tracks.isEmpty || offline.complete
+                            ? null
+                            : () {
+                                showSnack(context, 'Downloading ${songsLabel(tracks.length).toLowerCase()}');
+                                downloads.downloadAll(tracks);
+                              },
+                        icon: Icon(offline.complete ? Icons.download_done_rounded : Icons.download_rounded),
+                      ),
             ],
           ),
         ],

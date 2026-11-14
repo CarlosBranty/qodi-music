@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../../core/theme/tokens.dart';
 import '../../../shared/widgets/track_tile.dart';
+import '../../downloads/ui/offline_status.dart';
 import 'player_providers.dart';
 
 Future<void> showQueueSheet(BuildContext context) => showModalBottomSheet<void>(
@@ -43,6 +44,7 @@ Future<void> showQueueSheet(BuildContext context) => showModalBottomSheet<void>(
                     track: queue[i],
                     highlighted: i == snap?.queuePosition,
                     onTap: () => port.jumpTo(i),
+                    trailing: OfflineTrackBadge(queue[i].id),
                   ),
                 ),
               ),

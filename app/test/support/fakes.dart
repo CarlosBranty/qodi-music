@@ -6,6 +6,8 @@ import 'package:qodi_music/core/config/core_providers.dart';
 import 'package:qodi_music/core/config/settings_store.dart';
 import 'package:qodi_music/core/platform/platform_services.dart';
 import 'package:qodi_music/features/device_music/domain/device_music_source.dart';
+import 'package:qodi_music/features/downloads/domain/download_store.dart';
+import 'package:qodi_music/features/equalizer/domain/equalizer.dart';
 import 'package:qodi_music/features/favorites/domain/favorites_repository.dart';
 import 'package:qodi_music/features/favorites/ui/favorites_controller.dart';
 import 'package:qodi_music/features/library/data/memory_library_cache.dart';
@@ -119,3 +121,44 @@ Future<List<Override>> baseOverrides({
 }
 
 Override playerOverride(PlayerPort port) => playerPortProvider.overrideWithValue(port);
+
+/// In-memory [DownloadStore]: [downloaded] ids are "on disk".
+class FakeDownloadStore implements DownloadStore {
+  FakeDownloadStore([Set<String>? downloaded]) : downloaded = downloaded ?? {};
+  final Set<String> downloaded;
+
+  @override
+  Future<Set<String>> downloadedIds() async => {...downloaded};
+  @override
+  Future<String?> localPath(String trackId) async => downloaded.contains(trackId) ? '/music/$trackId' : null;
+  @override
+  Future<void> download(String trackId, Uri url, String extension, {void Function(double progress)? onProgress}) async =>
+      downloaded.add(trackId);
+  @override
+  Future<void> delete(String trackId) async => downloaded.remove(trackId);
+  @override
+  Future<int> totalBytes() async => downloaded.length;
+}
+
+/// Scriptable [EqualizerPort]: [reportBands] simulates the engine reporting
+/// its bands after the player is prepared.
+class FakeEqualizer implements EqualizerPort {
+  FakeEqualizer({this.supported = true});
+
+  @override
+  final bool supported;
+  final _params = Completer<EqualizerParameters>();
+  final List<bool> enabledCalls = [];
+  final List<List<double>> gainCalls = [];
+
+  void reportBands(EqualizerParameters p) => _params.complete(p);
+
+  @override
+  Future<EqualizerParameters> get parameters => _params.future;
+  @override
+  Future<void> setEnabled(bool enabled) async => enabledCalls.add(enabled);
+  @override
+  Future<void> setGains(List<double> gains) async => gainCalls.add(List.of(gains));
+}
+
+const fiveBands = EqualizerParameters(minDb: -15, maxDb: 15, centerFrequencies: [60, 230, 910, 3600, 14000]);

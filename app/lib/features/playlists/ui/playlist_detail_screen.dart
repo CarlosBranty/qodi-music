@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../../core/theme/tokens.dart';
 import '../../../shared/format.dart';
 import '../../../shared/widgets/track_tile.dart';
+import '../../downloads/ui/offline_status.dart';
 import '../../library/domain/entities.dart';
 import '../../library/ui/album_detail_screen.dart';
 import '../../library/ui/track_actions.dart';
@@ -129,6 +130,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                          OfflineTrackBadge(t.id),
                           IconButton(
                             tooltip: 'Remove from playlist',
                             icon: Icon(Icons.remove_circle_outline_rounded, color: QodiColors.of(context).textMuted),

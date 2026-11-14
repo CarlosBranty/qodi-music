@@ -42,6 +42,38 @@ Release builds: `flutter build web --release`, `flutter build linux --release`,
   (Android notification, iOS lock screen, MPRIS on Linux, Media Session on web).
 - Streaming quality: original file or Opus 128 kbps (Settings).
 - Music on the device itself (native only), with or without a server — see below.
+- Offline indicator: an orange badge (circle with a download-done icon) marks
+  tracks available without a connection — downloaded server tracks and device
+  tracks — on track rows, the queue, Home "Recently played" vinyls, album
+  cards (all tracks of the album downloaded, from the local library cache),
+  the mini player and the Now Playing cover. Album/playlist/artist headers show
+  "Downloaded" or "N of M downloaded", and "Download all" turns into a
+  progress ring while downloading. Web has no downloads, so no badge there.
+- Equalizer (Android) — see below.
+
+## Equalizer
+
+Settings › Playback › Equalizer, or Now Playing › ⋯ › Equalizer: on/off,
+one vertical slider per band the device reports (e.g. 60 Hz … 14 kHz),
+presets (Flat, Bass boost, Treble boost, Vocal, Rock, Pop, Electronic,
+Acoustic), "Custom" after moving a slider, and Reset (flat). Presets are dB
+curves over a 10-band reference (31 Hz … 16 kHz) interpolated on a log
+frequency axis onto the device's bands and clamped to its range.
+
+The enabled flag, preset and custom gains are stored in shared preferences
+(`equalizer`, JSON) and applied on start; gains are applied again as soon as
+the device reports its bands (Android reports them only after the player has
+been prepared for the first time, so the screen asks to play a song until then).
+
+| Platform | Equalizer |
+|---|---|
+| Android | Yes — just_audio `AndroidEqualizer` in the player's `AudioPipeline` |
+| iOS / macOS | No — just_audio 0.10.6 has no Darwin equalizer effect |
+| Linux / Windows | No — media_kit backend has no audio effects |
+| Web | No |
+
+Where unsupported, the Settings and Now Playing entries are hidden and the
+screen (if reached) shows "Not available on this platform".
 
 ## Music on this device
 
@@ -89,7 +121,7 @@ player (queue, background playback, media notification / MPRIS).
 lib/
   core/      api client, config/prefs, theme tokens, router, platform split
   features/  auth, library, player, playlists, favorites, stats, lyrics,
-             downloads, search, home, settings, device_music — each with
+             downloads, search, home, settings, device_music, equalizer — each with
              domain/data/ui
   shared/    VinylCover, ArcWaveformSeekbar, BentoCard, PillNavBar, TrackTile, ...
 ```

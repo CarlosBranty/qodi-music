@@ -13,6 +13,7 @@ import '../../features/player/ui/now_playing_screen.dart';
 import '../../features/playlists/ui/playlist_detail_screen.dart';
 import '../../features/search/ui/explore_screen.dart';
 import '../../features/settings/ui/settings_screen.dart';
+import '../../features/equalizer/ui/equalizer_screen.dart';
 import '../../features/stats/ui/stats_screen.dart';
 import '../../shared/widgets/pill_nav_bar.dart';
 
@@ -38,6 +39,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
       GoRoute(path: '/now-playing', builder: (_, _) => const NowPlayingScreen()),
       GoRoute(path: '/settings', builder: (_, _) => const SettingsScreen()),
+      GoRoute(path: '/equalizer', builder: (_, _) => const EqualizerScreen()),
       StatefulShellRoute.indexedStack(
         builder: (context, state, shell) => AppShell(shell: shell),
         branches: [

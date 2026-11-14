@@ -9,6 +9,8 @@ import '../../../shared/widgets/cover_art.dart';
 import '../../../shared/widgets/vinyl_cover.dart';
 import '../../device_music/domain/device_track.dart';
 import '../../device_music/ui/device_playlist_picker.dart';
+import '../../downloads/ui/offline_status.dart';
+import '../../equalizer/ui/equalizer_controller.dart';
 import '../../favorites/ui/track_favorite.dart';
 import '../../library/domain/entities.dart';
 import '../../library/ui/library_providers.dart';
@@ -28,6 +30,7 @@ class NowPlayingScreen extends ConsumerWidget {
     final snap = ref.watch(playerSnapshotProvider).value ?? PlayerSnapshot.empty;
     final track = snap.current;
     final c = QodiColors.of(context);
+    final equalizer = ref.watch(equalizerControllerProvider.select((s) => s.supported));
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -59,14 +62,17 @@ class NowPlayingScreen extends ConsumerWidget {
                           isDeviceTrackId(track.id)
                               ? showDevicePlaylistPicker(context, ref, [track])
                               : showPlaylistPicker(context, ref, [track]);
+                        case 'equalizer':
+                          context.push('/equalizer');
                         case 'more':
                           showTrackActions(context, ref, track);
                       }
                     },
-                    itemBuilder: (_) => const [
-                      PopupMenuItem(value: 'queue', child: Text('Queue')),
-                      PopupMenuItem(value: 'playlist', child: Text('Add to playlist')),
-                      PopupMenuItem(value: 'more', child: Text('More actions')),
+                    itemBuilder: (_) => [
+                      const PopupMenuItem(value: 'queue', child: Text('Queue')),
+                      const PopupMenuItem(value: 'playlist', child: Text('Add to playlist')),
+                      if (equalizer) const PopupMenuItem(value: 'equalizer', child: Text('Equalizer')),
+                      const PopupMenuItem(value: 'more', child: Text('More actions')),
                     ],
                   ),
                 ],
@@ -169,13 +175,18 @@ class _CoverCarouselState extends ConsumerState<_CoverCarousel> {
               duration: const Duration(milliseconds: 250),
               scale: isCurrent ? 1 : 0.82,
               child: isCurrent
-                  ? VinylCover(
-                      key: ValueKey('vinyl-${t.id}'),
-                      seed: t.albumId,
-                      trackId: t.hasCover ? t.id : null,
-                      size: size,
-                      spinning: s.playing,
-                      labelFraction: 0.5,
+                  ? OfflineCoverBadge(
+                      trackId: t.id,
+                      badgeSize: 34,
+                      inset: size * 0.08,
+                      child: VinylCover(
+                        key: ValueKey('vinyl-${t.id}'),
+                        seed: t.albumId,
+                        trackId: t.hasCover ? t.id : null,
+                        size: size,
+                        spinning: s.playing,
+                        labelFraction: 0.5,
+                      ),
                     )
                   : CoverArt(
                       seed: t.albumId,

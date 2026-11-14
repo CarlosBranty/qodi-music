@@ -9,6 +9,7 @@ import '../../../shared/widgets/connect_server_hint.dart';
 import '../../../shared/widgets/cover_art.dart';
 import '../../auth/ui/auth_controller.dart';
 import '../../device_music/domain/device_track.dart';
+import '../../downloads/ui/offline_status.dart';
 import '../../library/domain/entities.dart';
 import '../../library/ui/library_providers.dart';
 import '../../library/ui/track_actions.dart';
@@ -202,7 +203,11 @@ class AlbumCard extends StatelessWidget {
         children: [
           AspectRatio(
             aspectRatio: 1,
-            child: CoverArt(seed: album.id, trackId: album.coverTrackId, radius: QodiTokens.radiusL),
+            child: OfflineCoverBadge(
+              albumId: album.id,
+              inset: 8,
+              child: CoverArt(seed: album.id, trackId: album.coverTrackId, radius: QodiTokens.radiusL),
+            ),
           ),
           const SizedBox(height: 8),
           Text(album.title,

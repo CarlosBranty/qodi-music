@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../../core/theme/tokens.dart';
 import '../../../shared/widgets/track_tile.dart';
 import '../../downloads/ui/downloads_controller.dart';
+import '../../downloads/ui/offline_status.dart';
 import '../../device_music/domain/device_track.dart';
 import '../../device_music/ui/device_playlist_picker.dart';
 import '../../favorites/ui/track_favorite.dart';
@@ -116,19 +117,20 @@ class ConnectedTrackTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final fav = watchIsFavorite(ref, track);
     final current = ref.watch(playerSnapshotProvider.select((s) => s.value?.current?.id));
-    final dl = ref.watch(downloadsControllerProvider);
+    final downloading = ref.watch(downloadsControllerProvider.select((s) => s.isDownloading(track.id)));
+    final offline = ref.watch(trackAvailableOfflineProvider(track.id));
     return TrackTile(
       track: track,
       highlighted: current == track.id,
       favorite: fav,
       leading: leading,
       trailing: trailing ??
-          (dl.isDownloading(track.id)
+          (downloading
               ? const SizedBox.square(
                   dimension: 18,
                   child: CircularProgressIndicator(strokeWidth: 2, color: QodiTokens.orange))
-              : dl.isDownloaded(track.id)
-                  ? const Icon(Icons.download_done_rounded, size: 18, color: QodiTokens.orange)
+              : offline
+                  ? const OfflineBadge()
                   : null),
       onFavorite: () => toggleTrackFavorite(ref, track).catchError(
             (Object _) {

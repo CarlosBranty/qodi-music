@@ -1,7 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:just_audio/just_audio.dart';
 
 import '../../../core/config/core_providers.dart';
 import '../../downloads/ui/downloads_controller.dart';
+import '../../equalizer/data/just_audio_equalizer.dart';
+import '../../equalizer/ui/equalizer_controller.dart';
 import '../../library/ui/library_providers.dart';
 import '../../settings/ui/settings_controllers.dart';
 import '../../stats/ui/stats_providers.dart';
@@ -27,6 +30,8 @@ final playerPortProvider = Provider<PlayerPort>((ref) {
     recorder: ref.read(playRecorderProvider),
     onPlay: (play) => ref.read(playsReporterProvider).record(play),
     onTrackStarted: (track) => ref.read(historyProvider.notifier).push(track),
+    // The equalizer (Android only) must be part of the player's pipeline.
+    player: AudioPlayer(audioPipeline: audioPipelineFor(ref.read(androidEqualizerProvider))),
   );
   ref.onDispose(service.dispose);
   return service;

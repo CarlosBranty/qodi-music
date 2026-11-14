@@ -11,6 +11,7 @@ import '../../auth/ui/auth_controller.dart';
 import '../../device_music/domain/device_music_source.dart';
 import '../../device_music/domain/device_track.dart';
 import '../../device_music/ui/device_music_providers.dart';
+import '../../downloads/ui/offline_status.dart';
 import '../../favorites/ui/favorites_controller.dart';
 import '../../library/domain/entities.dart';
 import '../../library/ui/library_providers.dart';
@@ -398,10 +399,14 @@ class VinylCard extends StatelessWidget {
             ),
             Align(
               alignment: Alignment.topCenter,
-              child: VinylCover(
-                seed: track.albumId,
-                trackId: track.hasCover ? track.id : null,
-                size: 128,
+              child: OfflineCoverBadge(
+                trackId: track.id,
+                inset: 6,
+                child: VinylCover(
+                  seed: track.albumId,
+                  trackId: track.hasCover ? track.id : null,
+                  size: 128,
+                ),
               ),
             ),
           ],

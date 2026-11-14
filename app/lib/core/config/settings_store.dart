@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../features/auth/domain/auth_state.dart';
+import '../../features/equalizer/domain/equalizer.dart';
 import '../../features/library/data/library_mappers.dart';
 import '../../features/library/domain/entities.dart';
 import '../api/json.dart';
@@ -32,6 +33,7 @@ class SettingsStore {
   static const _kHistory = 'history';
   static const _kDeviceOnly = 'device_only';
   static const _kDeviceFolders = 'device_folders';
+  static const _kEqualizer = 'equalizer';
   static const historyLimit = 30;
 
   SharedPreferences get prefs => _prefs;
@@ -78,6 +80,19 @@ class SettingsStore {
   StreamQuality get quality => StreamQuality.values
       .firstWhere((e) => e.name == _prefs.getString(_kQuality), orElse: () => StreamQuality.original);
   Future<void> setQuality(StreamQuality v) => _prefs.setString(_kQuality, v.name);
+
+  /// Equalizer on/off, preset and custom gains (JSON).
+  EqualizerSettings get equalizer {
+    final raw = _prefs.getString(_kEqualizer);
+    if (raw == null) return EqualizerSettings.defaults;
+    try {
+      return EqualizerSettings.fromJson(jsonDecode(raw));
+    } catch (_) {
+      return EqualizerSettings.defaults;
+    }
+  }
+
+  Future<void> setEqualizer(EqualizerSettings v) => _prefs.setString(_kEqualizer, jsonEncode(v.toJson()));
 
   /// Recently played tracks, most recent first.
   List<Track> get history {

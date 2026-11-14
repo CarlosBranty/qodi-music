@@ -11,6 +11,7 @@ import '../../auth/ui/auth_controller.dart';
 import '../../device_music/ui/device_folders_settings.dart';
 import '../../device_music/ui/device_music_providers.dart';
 import '../../downloads/ui/downloads_controller.dart';
+import '../../equalizer/ui/equalizer_controller.dart';
 import '../../library/ui/library_providers.dart';
 import '../../library/ui/track_actions.dart';
 import '../../player/ui/player_providers.dart';
@@ -33,6 +34,7 @@ class SettingsScreen extends ConsumerWidget {
     final offline = ref.read(platformServicesProvider).supportsOffline;
     final server = session != null;
     final device = ref.watch(deviceMusicSupportedProvider);
+    final equalizer = ref.watch(equalizerControllerProvider.select((s) => s.supported));
     Widget label(String t) => Padding(
           padding: const EdgeInsets.fromLTRB(8, 20, 8, 8),
           child: Text(t, style: TextStyle(color: c.textMuted, fontWeight: FontWeight.w700)),
@@ -81,6 +83,20 @@ class SettingsScreen extends ConsumerWidget {
             selected: {theme},
             onSelectionChanged: (s) => ref.read(themePreferenceProvider.notifier).set(s.first),
           ),
+          if (equalizer) ...[
+            label('Playback'),
+            BentoCard(
+              padding: EdgeInsets.zero,
+              child: ListTile(
+                key: const Key('settings-equalizer'),
+                leading: const Icon(Icons.equalizer_rounded, color: QodiTokens.orange),
+                title: const Text('Equalizer'),
+                subtitle: const Text('Presets and custom sound'),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () => context.push('/equalizer'),
+              ),
+            ),
+          ],
           if (server) label('Streaming quality'),
           if (server)
             BentoCard(

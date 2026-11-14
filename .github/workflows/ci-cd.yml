@@ -156,4 +156,7 @@ jobs:
             echo "::warning::DOKPLOY_WEBHOOK_URL secret is not set; skipping deploy trigger."
             exit 0
           fi
-          curl --fail --silent --show-error -X POST "$DOKPLOY_WEBHOOK_URL"
+          # Dokploy validates the branch from a GitHub-style push payload.
+          curl --fail --silent --show-error -X POST \
+            -H 'Content-Type: application/json' -H 'X-GitHub-Event: push' \
+            -d '{"ref":"refs/heads/main"}' "$DOKPLOY_WEBHOOK_URL"

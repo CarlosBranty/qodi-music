@@ -14,7 +14,8 @@ val keystoreProperties = Properties().apply {
 
 android {
     namespace = "dev.qodi.qodi_music"
-    compileSdk = flutter.compileSdkVersion
+    // permission_handler_android requires compiling against API 37.
+    compileSdk = maxOf(flutter.compileSdkVersion, 37)
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

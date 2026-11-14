@@ -35,6 +35,6 @@ ENV QODI_BIND=0.0.0.0:4040 QODI_MUSIC_DIR=/music QODI_DATA_DIR=/data QODI_WEB_DI
 EXPOSE 4040
 VOLUME ["/data"]
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s \
-  CMD ["sh", "-c", "exec 3<>/dev/tcp/127.0.0.1/4040 && printf 'GET /api/v1/health HTTP/1.0\\r\\n\\r\\n' >&3 && grep -q '\"ok\"' <&3"]
+  CMD ["bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/4040 && printf 'GET /api/v1/health HTTP/1.0\\r\\n\\r\\n' >&3 && grep -q '\"ok\"' <&3"]
 ENTRYPOINT ["tini", "--"]
 CMD ["qodi-server"]

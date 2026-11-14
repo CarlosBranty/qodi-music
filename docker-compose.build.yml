@@ -1,0 +1,6 @@
+# Override to build the image locally instead of pulling it from GHCR.
+services:
+  qodi-music:
+    build: .
+    image: qodi-music:local
+    pull_policy: build

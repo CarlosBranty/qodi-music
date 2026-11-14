@@ -1,7 +1,9 @@
+# Production: runs the image built by GitHub Actions (see .github/workflows/ci-cd.yml).
+# Local build instead: docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 services:
   qodi-music:
-    build: .
-    image: qodi-music:latest
+    image: ghcr.io/cbranty/qodi-music:${QODI_TAG:-latest}
+    pull_policy: always
     restart: unless-stopped
     user: "${QODI_UID:-1000}:${QODI_GID:-1000}"
     environment:

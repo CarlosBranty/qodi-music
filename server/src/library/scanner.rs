@@ -1,7 +1,8 @@
 //! Incremental library scanner.
 //!
 //! The filesystem walk and tag reading run on the blocking pool; only files whose
-//! size or mtime changed are re-read. Files that disappeared become tombstones.
+//! size or mtime changed are re-read, plus files indexed before the audio quality
+//! fields existed (once, after upgrading). Files that disappeared become tombstones.
 //! Scans are serialized: at most one runs and at most one more is queued.
 
 use std::collections::{HashMap, HashSet};
@@ -30,6 +31,8 @@ pub struct IndexedFile {
     pub has_embedded_lyrics: bool,
     pub has_cover: bool,
     pub has_lyrics: bool,
+    /// `false` for rows indexed before quality fields existed.
+    pub quality_scanned: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -149,7 +152,9 @@ pub fn diff_library(
         let has_sidecar_lyrics = sidecar_lyrics_path(&file.absolute).is_file();
 
         match snapshot.get(&file.relative) {
-            Some(known) if known.size_bytes == file.size_bytes && known.mtime_ms == file.mtime_ms => {
+            Some(known)
+                if known.quality_scanned && known.size_bytes == file.size_bytes && known.mtime_ms == file.mtime_ms =>
+            {
                 let has_cover = known.has_embedded_cover || has_sidecar_cover;
                 let has_lyrics = known.has_embedded_lyrics || has_sidecar_lyrics;
                 if has_cover != known.has_cover || has_lyrics != known.has_lyrics {

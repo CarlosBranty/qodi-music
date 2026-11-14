@@ -25,6 +25,18 @@ impl ApiError {
         Self::new(StatusCode::UNAUTHORIZED, "invalid_credentials", "invalid username or password")
     }
 
+    pub fn forbidden() -> Self {
+        Self::new(StatusCode::FORBIDDEN, "forbidden", "admin access required")
+    }
+
+    pub fn invalid_invite() -> Self {
+        Self::new(StatusCode::BAD_REQUEST, "invalid_invite", "invite code is unknown, expired or used up")
+    }
+
+    pub fn username_taken() -> Self {
+        Self::new(StatusCode::CONFLICT, "username_taken", "username is already taken")
+    }
+
     pub fn not_found(what: &str) -> Self {
         Self::new(StatusCode::NOT_FOUND, "not_found", format!("{what} not found"))
     }

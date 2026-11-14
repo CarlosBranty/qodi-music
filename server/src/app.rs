@@ -12,7 +12,7 @@ use crate::adapters::fs_watcher::{self, MusicWatcher};
 use crate::adapters::lofty_tags::LoftyTagReader;
 use crate::adapters::sqlite::SqliteStore;
 use crate::adapters::symphonia_waveform::SymphoniaWaveform;
-use crate::auth::{TokenService, UserRepository, hash_password, load_or_create_secret};
+use crate::auth::{TokenService, UserRepository, hash_password_async, load_or_create_secret};
 use crate::config::Config;
 use crate::library::TagReader;
 use crate::library::scanner::Scanner;
@@ -106,16 +106,25 @@ impl App {
     }
 }
 
+/// Ensures `QODI_ADMIN_USER` exists and is admin. An existing user keeps its password;
+/// `QODI_ADMIN_PASSWORD` is only used to create a missing one.
 async fn bootstrap_admin(store: &SqliteStore, config: &Config) -> Result<()> {
-    let (Some(username), Some(password)) = (&config.admin_user, &config.admin_password) else {
+    let Some(username) = &config.admin_user else {
         return Ok(());
     };
-    if store.credentials(username).await?.is_some() {
+    if let Some(existing) = store.credentials(username).await? {
+        if !existing.is_admin {
+            store.set_admin(&existing.id, true).await?;
+            tracing::info!(%username, "promoted user to admin");
+        }
         return Ok(());
     }
-    let password = password.clone();
-    let hash = tokio::task::spawn_blocking(move || hash_password(&password)).await??;
-    store.create_user(username, &hash, now_ms()).await?;
+    let Some(password) = &config.admin_password else {
+        tracing::warn!(%username, "QODI_ADMIN_USER does not exist and QODI_ADMIN_PASSWORD is unset; not creating it");
+        return Ok(());
+    };
+    let hash = hash_password_async(password.clone()).await?;
+    store.create_user(username, &hash, true, now_ms()).await?;
     tracing::info!(%username, "created admin user");
     Ok(())
 }

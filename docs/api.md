@@ -5,7 +5,7 @@ Contract between `server/` (Rust) and `app/` (Flutter). Both sides MUST follow i
 ## Conventions
 
 - Base path: `/api/v1`. JSON bodies use `snake_case`. Timestamps are RFC 3339 UTC strings (`2026-11-13T20:15:00Z`).
-- Auth: every endpoint except `GET /health` and `POST /auth/login` requires a JWT, sent as
+- Auth: every endpoint except `GET /health`, `POST /auth/login`, `POST /auth/register` and `GET /app/android` requires a JWT, sent as
   `Authorization: Bearer <token>` **or** as query parameter `?token=<token>` (needed by `<audio>`/`<img>` on web).
 - Errors: non-2xx responses return `{"error": {"code": "<snake_case>", "message": "<human text>"}}`.
   Codes: `unauthorized` (401), `invalid_credentials` (401), `forbidden` (403), `not_found` (404), `bad_request` (400),

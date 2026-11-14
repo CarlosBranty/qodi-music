@@ -39,6 +39,21 @@ impl FromRequestParts<AppState> for AuthUser {
     }
 }
 
+/// An authenticated user with `is_admin`; others get 403 `forbidden`.
+pub struct AdminUser(pub User);
+
+impl FromRequestParts<AppState> for AdminUser {
+    type Rejection = ApiError;
+
+    async fn from_request_parts(parts: &mut Parts, state: &AppState) -> Result<Self, ApiError> {
+        let AuthUser(user) = AuthUser::from_request_parts(parts, state).await?;
+        if !user.is_admin {
+            return Err(ApiError::forbidden());
+        }
+        Ok(Self(user))
+    }
+}
+
 /// `Query` with `bad_request` rejections.
 pub struct ApiQuery<T>(pub T);
 

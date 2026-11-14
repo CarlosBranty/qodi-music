@@ -10,6 +10,8 @@ pub struct Config {
     pub music_dir: PathBuf,
     pub data_dir: PathBuf,
     pub web_dir: PathBuf,
+    /// Published client builds (`android/latest.json` and the APK).
+    pub dist_dir: PathBuf,
     pub jwt_secret: Option<String>,
     pub token_ttl_days: i64,
     pub admin_user: Option<String>,
@@ -28,6 +30,7 @@ impl Config {
             music_dir: music_dir.into(),
             data_dir: data_dir.into(),
             web_dir: PathBuf::from("/app/web"),
+            dist_dir: PathBuf::from("/app/dist"),
             jwt_secret: None,
             token_ttl_days: 30,
             admin_user: None,
@@ -47,6 +50,9 @@ impl Config {
         }
         if let Some(web) = env("QODI_WEB_DIR") {
             config.web_dir = web.into();
+        }
+        if let Some(dist) = env("QODI_DIST_DIR") {
+            config.dist_dir = dist.into();
         }
         config.jwt_secret = env("QODI_JWT_SECRET");
         if let Some(ttl) = env("QODI_TOKEN_TTL_DAYS") {

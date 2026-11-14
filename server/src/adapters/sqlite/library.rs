@@ -145,13 +145,14 @@ struct IndexedRow {
     has_embedded_lyrics: bool,
     has_cover: bool,
     has_lyrics: bool,
+    quality_scanned: bool,
 }
 
 impl LibraryIndex for SqliteStore {
     async fn snapshot(&self) -> Result<HashMap<String, IndexedFile>> {
         let rows = sqlx::query_as::<_, IndexedRow>(
-            "SELECT id, path, size_bytes, mtime_ms, has_embedded_cover, has_embedded_lyrics, has_cover, has_lyrics \
-             FROM tracks",
+            "SELECT id, path, size_bytes, mtime_ms, has_embedded_cover, has_embedded_lyrics, has_cover, has_lyrics, \
+             quality_scanned FROM tracks",
         )
         .fetch_all(&self.pool)
         .await?;
@@ -166,6 +167,7 @@ impl LibraryIndex for SqliteStore {
                     has_embedded_lyrics: r.has_embedded_lyrics,
                     has_cover: r.has_cover,
                     has_lyrics: r.has_lyrics,
+                    quality_scanned: r.quality_scanned,
                 };
                 (r.path, file)
             })
@@ -180,9 +182,9 @@ impl LibraryIndex for SqliteStore {
                 "INSERT INTO tracks (id, path, title, artist, artist_id, album, album_id, album_artist, \
                  album_artist_id, track_number, disc_number, year, genre, duration_ms, format, bitrate_kbps, \
                  size_bytes, mtime_ms, has_embedded_cover, has_embedded_lyrics, has_cover, has_lyrics, \
-                 search_text, updated_at) \
+                 search_text, updated_at, sample_rate_hz, bit_depth, channels, lossless, quality_scanned) \
                  VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, \
-                 ?20, ?21, ?22, ?23, ?24) \
+                 ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27, ?28, 1) \
                  ON CONFLICT (id) DO UPDATE SET path = excluded.path, title = excluded.title, \
                  artist = excluded.artist, artist_id = excluded.artist_id, album = excluded.album, \
                  album_id = excluded.album_id, album_artist = excluded.album_artist, \
@@ -193,7 +195,9 @@ impl LibraryIndex for SqliteStore {
                  mtime_ms = excluded.mtime_ms, has_embedded_cover = excluded.has_embedded_cover, \
                  has_embedded_lyrics = excluded.has_embedded_lyrics, has_cover = excluded.has_cover, \
                  has_lyrics = excluded.has_lyrics, search_text = excluded.search_text, \
-                 updated_at = excluded.updated_at",
+                 updated_at = excluded.updated_at, sample_rate_hz = excluded.sample_rate_hz, \
+                 bit_depth = excluded.bit_depth, channels = excluded.channels, lossless = excluded.lossless, \
+                 quality_scanned = 1",
             )
             .bind(&t.id)
             .bind(&record.path)
@@ -219,6 +223,10 @@ impl LibraryIndex for SqliteStore {
             .bind(t.has_lyrics)
             .bind(&record.search_text)
             .bind(now_ms)
+            .bind(t.sample_rate_hz)
+            .bind(t.bit_depth)
+            .bind(t.channels)
+            .bind(t.lossless)
             .execute(&mut *tx)
             .await?;
             sqlx::query("DELETE FROM tombstones WHERE track_id = ?1").bind(&t.id).execute(&mut *tx).await?;

@@ -1,6 +1,8 @@
 //! HTTP adapter: axum routes for `/api/v1` plus the web client SPA.
 
+mod admin;
 mod auth;
+mod distribution;
 mod error;
 mod extract;
 mod favorites;
@@ -13,7 +15,7 @@ mod streaming;
 use axum::Json;
 use axum::extract::{Request, State};
 use axum::response::{IntoResponse, Response};
-use axum::routing::{get, post, put};
+use axum::routing::{delete, get, post, put};
 use axum::Router;
 use serde::Serialize;
 use serde_json::{Value, json};
@@ -39,11 +41,12 @@ async fn not_found() -> ApiError {
     ApiError::not_found("route")
 }
 
-/// Non-API paths are served from the web build with SPA fallback to `index.html`.
+/// Non-API paths (outside `/downloads`) are served from the web build with SPA fallback to `index.html`.
 async fn web_fallback(State(state): State<AppState>, request: Request) -> Response {
     let path = request.uri().path();
     let web_dir = &state.config.web_dir;
-    if path == "/api" || path.starts_with("/api/") || !web_dir.is_dir() {
+    let reserved = path == "/api" || path.starts_with("/api/") || path == "/downloads" || path.starts_with("/downloads/");
+    if reserved || !web_dir.is_dir() {
         return not_found().await.into_response();
     }
     let index = ServeFile::new(web_dir.join("index.html"));
@@ -57,7 +60,14 @@ pub fn router(state: AppState) -> Router {
     let api = Router::new()
         .route("/health", get(health))
         .route("/auth/login", post(auth::login))
+        .route("/auth/register", post(auth::register))
+        .route("/app/android", get(distribution::android_manifest))
         .route("/me", get(auth::me))
+        .route("/me/password", put(auth::change_password))
+        .route("/admin/users", get(admin::list_users))
+        .route("/admin/users/{id}", delete(admin::delete_user))
+        .route("/admin/invites", get(admin::list_invites).post(admin::create_invite))
+        .route("/admin/invites/{code}", delete(admin::delete_invite))
         .route("/tracks", get(library::list_tracks))
         .route("/tracks/{id}", get(library::get_track))
         .route("/tracks/{id}/stream", get(streaming::stream))
@@ -87,6 +97,7 @@ pub fn router(state: AppState) -> Router {
 
     Router::new()
         .nest("/api/v1", api)
+        .route("/downloads/android/{file}", get(distribution::android_download))
         .fallback(web_fallback)
         .layer(CorsLayer::permissive())
         .layer(trace)

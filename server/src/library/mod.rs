@@ -30,6 +30,11 @@ pub struct Track {
     pub duration_ms: i64,
     pub format: String,
     pub bitrate_kbps: Option<i64>,
+    pub sample_rate_hz: Option<i64>,
+    /// `None` for lossy codecs.
+    pub bit_depth: Option<i64>,
+    pub channels: Option<i64>,
+    pub lossless: bool,
     pub size_bytes: i64,
     pub has_cover: bool,
     pub has_lyrics: bool,
@@ -80,6 +85,11 @@ pub struct TrackMeta {
     pub genre: Option<String>,
     pub duration_ms: i64,
     pub bitrate_kbps: Option<i64>,
+    pub sample_rate_hz: Option<i64>,
+    pub bit_depth: Option<i64>,
+    pub channels: Option<i64>,
+    /// Codec-level answer when the file could be parsed; `None` falls back to the extension.
+    pub lossless: Option<bool>,
     pub has_embedded_cover: bool,
     pub has_embedded_lyrics: bool,
 }
@@ -169,6 +179,9 @@ pub trait LibraryCatalog: Send + Sync {
     ) -> impl Future<Output = anyhow::Result<(Vec<Track>, Vec<String>)>> + Send;
 }
 
+/// Extensions that are always lossless. `m4a` depends on the codec (ALAC vs AAC).
+pub const LOSSLESS_EXTENSIONS: &[&str] = &["flac", "wav", "aiff", "aif", "ape", "wv"];
+
 pub fn extension_of(path: &Path) -> Option<String> {
     path.extension().and_then(|e| e.to_str()).map(str::to_ascii_lowercase)
 }
@@ -223,6 +236,8 @@ pub fn build_record(relative_path: &str, facts: FileFacts, meta: TrackMeta) -> T
     let album = clean(meta.album).unwrap_or(parent);
     let album_artist = clean(meta.album_artist).unwrap_or_else(|| artist.clone());
     let search_text = format!("{title}\n{artist}\n{album}").to_lowercase();
+    let format = extension_of(path).unwrap_or_default();
+    let lossless = meta.lossless.unwrap_or_else(|| LOSSLESS_EXTENSIONS.contains(&format.as_str()));
 
     let track = Track {
         id: ids::track_id(relative_path),
@@ -237,8 +252,12 @@ pub fn build_record(relative_path: &str, facts: FileFacts, meta: TrackMeta) -> T
         year: meta.year,
         genre: clean(meta.genre),
         duration_ms: meta.duration_ms,
-        format: extension_of(path).unwrap_or_default(),
+        format,
         bitrate_kbps: meta.bitrate_kbps,
+        sample_rate_hz: meta.sample_rate_hz,
+        bit_depth: meta.bit_depth.filter(|_| lossless),
+        channels: meta.channels,
+        lossless,
         size_bytes: facts.size_bytes,
         has_cover: meta.has_embedded_cover || facts.has_sidecar_cover,
         has_lyrics: meta.has_embedded_lyrics || facts.has_sidecar_lyrics,
@@ -270,5 +289,9 @@ mod tests {
         assert_eq!(record.track.format, "flac");
         let root = build_record("loose.mp3", facts, TrackMeta::default());
         assert_eq!(root.track.album, UNKNOWN_ALBUM);
+        assert!(!root.track.lossless);
+        assert!(record.track.lossless, "flac falls back to lossless when the codec is unknown");
+        let lossy = TrackMeta { bit_depth: Some(16), lossless: Some(false), ..TrackMeta::default() };
+        assert_eq!(build_record("a.m4a", facts, lossy).track.bit_depth, None);
     }
 }

@@ -3,6 +3,9 @@
 use std::path::Path;
 
 use anyhow::Result;
+use lofty::file::{AudioFile, FileType};
+use lofty::config::ParseOptions;
+use lofty::mp4::{Mp4Codec, Mp4File};
 use lofty::picture::PictureType;
 use lofty::prelude::*;
 use lofty::tag::Tag;
@@ -51,6 +54,21 @@ fn sniff_mime(data: &[u8]) -> &'static str {
     }
 }
 
+/// Lossless by container, except MP4 where it depends on the codec (ALAC or FLAC).
+fn is_lossless(file_type: FileType, path: &Path) -> bool {
+    match file_type {
+        FileType::Flac | FileType::Wav | FileType::Aiff | FileType::Ape | FileType::WavPack => true,
+        FileType::Mp4 => matches!(mp4_codec(path), Some(Mp4Codec::ALAC | Mp4Codec::FLAC)),
+        _ => false,
+    }
+}
+
+fn mp4_codec(path: &Path) -> Option<Mp4Codec> {
+    let mut reader = std::fs::File::open(path).ok()?;
+    let file = Mp4File::read_from(&mut reader, ParseOptions::new().read_tags(false)).ok()?;
+    file.properties().codec()
+}
+
 impl TagReader for LoftyTagReader {
     fn read(&self, path: &Path) -> Result<TrackMeta> {
         let file = lofty::read_from_path(path)?;
@@ -67,6 +85,10 @@ impl TagReader for LoftyTagReader {
             genre: first(&tags, |t| text(t.genre())),
             duration_ms: props.duration().as_millis() as i64,
             bitrate_kbps: props.audio_bitrate().or(props.overall_bitrate()).filter(|b| *b > 0).map(i64::from),
+            sample_rate_hz: props.sample_rate().filter(|r| *r > 0).map(i64::from),
+            bit_depth: props.bit_depth().filter(|b| *b > 0).map(i64::from),
+            channels: props.channels().filter(|c| *c > 0).map(i64::from),
+            lossless: Some(is_lossless(file.file_type(), path)),
             has_embedded_cover: tags.iter().any(|t| !t.pictures().is_empty()),
             has_embedded_lyrics: tags.iter().any(|t| lyrics_of(t).is_some()),
         })

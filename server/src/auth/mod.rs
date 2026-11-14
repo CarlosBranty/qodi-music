@@ -15,20 +15,119 @@ use serde::{Deserialize, Serialize};
 pub struct User {
     pub id: String,
     pub username: String,
+    pub is_admin: bool,
+}
+
+/// A user as listed by `/admin/users`.
+#[derive(Debug, Clone, Serialize, sqlx::FromRow)]
+pub struct UserSummary {
+    pub id: String,
+    pub username: String,
+    pub is_admin: bool,
+    #[serde(serialize_with = "crate::time::serialize_ms")]
+    pub created_at: i64,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, sqlx::FromRow)]
+pub struct Invite {
+    pub code: String,
+    #[serde(serialize_with = "crate::time::serialize_ms")]
+    pub created_at: i64,
+    #[serde(serialize_with = "crate::time::serialize_ms")]
+    pub expires_at: i64,
+    pub max_uses: i64,
+    pub uses: i64,
+}
+
+#[derive(Debug)]
+pub enum RegisterOutcome {
+    Created(User),
+    /// Unknown, expired or used up.
+    InvalidInvite,
+    UsernameTaken,
 }
 
 #[derive(Debug, Clone, sqlx::FromRow)]
 pub struct Credentials {
     pub id: String,
     pub username: String,
+    pub is_admin: bool,
     pub password_hash: String,
+}
+
+impl Credentials {
+    pub fn user(&self) -> User {
+        User { id: self.id.clone(), username: self.username.clone(), is_admin: self.is_admin }
+    }
 }
 
 /// Port: user persistence.
 pub trait UserRepository: Send + Sync {
     fn user_by_id(&self, id: &str) -> impl Future<Output = Result<Option<User>>> + Send;
     fn credentials(&self, username: &str) -> impl Future<Output = Result<Option<Credentials>>> + Send;
-    fn create_user(&self, username: &str, password_hash: &str, now_ms: i64) -> impl Future<Output = Result<User>> + Send;
+    fn credentials_by_id(&self, id: &str) -> impl Future<Output = Result<Option<Credentials>>> + Send;
+    /// Inserts a user. Used by the admin bootstrap; registration goes through `register`.
+    fn create_user(
+        &self,
+        username: &str,
+        password_hash: &str,
+        is_admin: bool,
+        now_ms: i64,
+    ) -> impl Future<Output = Result<User>> + Send;
+    fn set_admin(&self, id: &str, is_admin: bool) -> impl Future<Output = Result<()>> + Send;
+    fn set_password_hash(&self, id: &str, password_hash: &str) -> impl Future<Output = Result<()>> + Send;
+    /// All users, oldest first.
+    fn users(&self) -> impl Future<Output = Result<Vec<UserSummary>>> + Send;
+    /// Deletes the user and, by cascade, their playlists, favorites and plays. `false` if unknown.
+    fn delete_user(&self, id: &str) -> impl Future<Output = Result<bool>> + Send;
+    /// Atomically consumes one use of a valid invite and creates a non-admin user.
+    /// `username` must already be normalized and the hash computed.
+    fn register(
+        &self,
+        invite_code: &str,
+        username: &str,
+        password_hash: &str,
+        now_ms: i64,
+    ) -> impl Future<Output = Result<RegisterOutcome>> + Send;
+}
+
+/// Port: invite persistence.
+pub trait InviteRepository: Send + Sync {
+    fn create_invite(&self, invite: &Invite, created_by: &str) -> impl Future<Output = Result<()>> + Send;
+    /// All invites, newest first.
+    fn invites(&self) -> impl Future<Output = Result<Vec<Invite>>> + Send;
+    /// `false` if unknown.
+    fn delete_invite(&self, code: &str) -> impl Future<Output = Result<bool>> + Send;
+}
+
+pub const INVITE_ALPHABET: &[u8] = b"ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+pub const INVITE_LEN: usize = 12;
+
+/// 12 characters from [`INVITE_ALPHABET`] drawn from the OS CSPRNG. The alphabet has
+/// 32 symbols, so masking each random byte to 5 bits is unbiased.
+pub fn generate_invite_code() -> Result<String> {
+    let mut bytes = [0u8; INVITE_LEN];
+    getrandom::fill(&mut bytes).map_err(|err| anyhow!("random invite code: {err}"))?;
+    Ok(bytes.iter().map(|b| INVITE_ALPHABET[(b & 0x1f) as usize] as char).collect())
+}
+
+/// Lowercases and validates a username against `^[a-z0-9_.-]{3,32}$`.
+pub fn normalize_username(raw: &str) -> Option<String> {
+    let name = raw.to_lowercase();
+    let valid = (3..=32).contains(&name.len())
+        && name.bytes().all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || matches!(b, b'_' | b'.' | b'-'));
+    valid.then_some(name)
+}
+
+/// Passwords must be 8 to 128 characters.
+pub fn valid_password(password: &str) -> bool {
+    (8..=128).contains(&password.chars().count())
+}
+
+/// Hashes on the blocking pool. Every path that stores a password (bootstrap,
+/// registration, password change) goes through this function.
+pub async fn hash_password_async(password: String) -> Result<String> {
+    tokio::task::spawn_blocking(move || hash_password(&password)).await.context("hash task panicked")?
 }
 
 pub fn hash_password(password: &str) -> Result<String> {
@@ -144,9 +243,26 @@ mod tests {
     }
 
     #[test]
+    fn invite_codes_use_the_alphabet() {
+        let code = generate_invite_code().unwrap();
+        assert_eq!(code.len(), INVITE_LEN);
+        assert!(code.bytes().all(|b| INVITE_ALPHABET.contains(&b)));
+        assert_ne!(code, generate_invite_code().unwrap());
+    }
+
+    #[test]
+    fn usernames_are_normalized() {
+        assert_eq!(normalize_username("New.User_1").as_deref(), Some("new.user_1"));
+        assert_eq!(normalize_username("ab"), None);
+        assert_eq!(normalize_username("has space"), None);
+        assert_eq!(normalize_username("ñandú"), None);
+        assert!(valid_password("12345678") && !valid_password("1234567"));
+    }
+
+    #[test]
     fn tokens_round_trip_and_reject_tampering() {
         let tokens = TokenService::new(b"secret", 30).unwrap();
-        let user = User { id: "u1".into(), username: "me".into() };
+        let user = User { id: "u1".into(), username: "me".into(), is_admin: false };
         let token = tokens.issue(&user).unwrap();
         assert_eq!(tokens.verify(&token).unwrap().sub, "u1");
         let other = TokenService::new(b"other", 30).unwrap();

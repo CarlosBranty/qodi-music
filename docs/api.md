@@ -82,6 +82,7 @@ Nullable fields: `track_number`, `disc_number`, `year`, `genre`, `bitrate_kbps`,
 | POST | `/plays` | `{"plays":[{"client_id":uuid,"track_id","played_at","listened_ms"}]}` | `{"accepted":int}` — duplicates by `client_id` are ignored and not counted |
 | GET | `/stats/summary` | `range=7d\|30d\|all` (default `30d`) | see below |
 | GET | `/library/changes` | `since` (RFC 3339, optional; omitted = full snapshot) | `{"server_time","tracks":[Track],"removed_track_ids":[id]}` |
+| GET | `/app/android` | **public** (no auth) | `{"version_name":"0.2.0","version_code":57,"url":"/downloads/android/qodi-music.apk","sha256":"<hex>","size_bytes":int,"published_at"}` · 404 `not_found` when no APK is published |
 | POST | `/library/scan` | – | 202 `{"status":"scanning"}` (starts a rescan in the background) |
 
 ```jsonc
@@ -100,6 +101,8 @@ Nullable fields: `track_number`, `disc_number`, `year`, `genre`, `bitrate_kbps`,
 - Supported files: `mp3, flac, ogg, opus, m4a, aac, wav`.
 - Library is scanned at startup, on filesystem changes (debounced watcher), every `QODI_SCAN_INTERVAL_SECS`, and on `POST /library/scan`.
 - Removed files become tombstones reported by `/library/changes` as `removed_track_ids`.
+- `GET /downloads/android/{file}` (outside `/api`, **public**) serves files from `{QODI_DIST_DIR}/android/` with `Content-Type: application/vnd.android.package-archive` for `.apk` and Range support; no directory listing, no path traversal.
+- `/app/android` is built from `{QODI_DIST_DIR}/android/latest.json`, written by CI: `{"version_name","version_code","file","sha256","size_bytes","published_at"}`; `url` = `/downloads/android/<file>`. Missing or invalid file → 404.
 - `/` serves the Flutter web build from `QODI_WEB_DIR` when present (SPA fallback to `index.html` for non-`/api` paths).
 
 ## Server configuration (env)
@@ -113,4 +116,5 @@ Nullable fields: `track_number`, `disc_number`, `year`, `genre`, `bitrate_kbps`,
 | `QODI_JWT_SECRET` | generated and persisted in data dir | token signing secret |
 | `QODI_TOKEN_TTL_DAYS` | `30` | token lifetime |
 | `QODI_ADMIN_USER` / `QODI_ADMIN_PASSWORD` | – | creates this user on startup when it does not exist, and always ensures it is admin (never resets its password) |
+| `QODI_DIST_DIR` | `/app/dist` | published client builds (Android APK + `latest.json`) |
 | `QODI_SCAN_INTERVAL_SECS` | `3600` | periodic full rescan |

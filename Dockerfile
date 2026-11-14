@@ -30,8 +30,10 @@ RUN apt-get update \
  && mkdir -p /data /music && chown qodi /data
 COPY --from=server /src/server/target/release/qodi-server /usr/local/bin/qodi-server
 COPY --from=web /src/app/build/web /app/web
+# Client builds published by CI (Android APK + latest.json); may be empty for local builds.
+COPY dist/ /app/dist/
 USER qodi
-ENV QODI_BIND=0.0.0.0:4040 QODI_MUSIC_DIR=/music QODI_DATA_DIR=/data QODI_WEB_DIR=/app/web RUST_LOG=info
+ENV QODI_BIND=0.0.0.0:4040 QODI_MUSIC_DIR=/music QODI_DATA_DIR=/data QODI_WEB_DIR=/app/web QODI_DIST_DIR=/app/dist RUST_LOG=info
 EXPOSE 4040
 VOLUME ["/data"]
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s \

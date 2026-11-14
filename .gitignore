@@ -3,3 +3,4 @@
 server/target/
 app/build/
 app/.dart_tool/
+/dist/android/

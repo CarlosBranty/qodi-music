@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:just_audio/just_audio.dart';
 
 import '../../library/domain/entities.dart';
@@ -21,7 +22,9 @@ class JustAudioPlayerService implements PlayerPort {
     void Function(PlayRecord play)? onPlay,
     void Function(Track track)? onTrackStarted,
     AudioPlayer? player,
+    bool? resetBeforeLoad,
   })  : _resolve = resolveSource,
+        _resetBeforeLoad = resetBeforeLoad ?? kIsWeb,
         _recorder = recorder,
         _onPlay = onPlay,
         _onTrackStarted = onTrackStarted,
@@ -40,6 +43,12 @@ class JustAudioPlayerService implements PlayerPort {
   final void Function(PlayRecord)? _onPlay;
   final void Function(Track)? _onTrackStarted;
   final AudioPlayer _player;
+
+  /// just_audio_web 0.4.x reuses its cached internal playlist when a new
+  /// source replaces the current one, so the browser keeps playing the first
+  /// track. Stopping first forces a fresh platform player. Not needed (and
+  /// it would flicker the media notification) on native platforms.
+  final bool _resetBeforeLoad;
   final PlayQueue<Track> _queue = PlayQueue<Track>();
   final _snapshots = StreamController<PlayerSnapshot>.broadcast();
   final List<StreamSubscription<dynamic>> _subs = [];
@@ -114,6 +123,10 @@ class JustAudioPlayerService implements PlayerPort {
     try {
       final uri = await _resolve(track);
       if (token != _loadToken) return;
+      if (_resetBeforeLoad) {
+        await _player.stop();
+        if (token != _loadToken) return;
+      }
       await _player.setAudioSource(AudioSource.uri(uri, tag: track.id));
       if (token != _loadToken) return;
       if (autoplay) unawaited(_player.play());

@@ -1,0 +1,8 @@
+.git
+.env
+music
+odd
+server/target
+app/build
+app/.dart_tool
+app/android/.gradle

@@ -1,0 +1,20 @@
+services:
+  qodi-music:
+    build: .
+    image: qodi-music:latest
+    restart: unless-stopped
+    user: "${QODI_UID:-1000}:${QODI_GID:-1000}"
+    environment:
+      QODI_ADMIN_USER: ${QODI_ADMIN_USER:?set QODI_ADMIN_USER in .env}
+      QODI_ADMIN_PASSWORD: ${QODI_ADMIN_PASSWORD:?set QODI_ADMIN_PASSWORD in .env}
+      QODI_JWT_SECRET: ${QODI_JWT_SECRET:-}
+      QODI_SCAN_INTERVAL_SECS: ${QODI_SCAN_INTERVAL_SECS:-3600}
+      RUST_LOG: ${RUST_LOG:-info}
+    volumes:
+      - ${QODI_MUSIC_DIR:-./music}:/music:ro
+      - qodi-data:/data
+    ports:
+      - "${QODI_PORT:-4040}:4040"
+
+volumes:
+  qodi-data:

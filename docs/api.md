@@ -37,7 +37,7 @@ Contract between `server/` (Rust) and `app/` (Flutter). Both sides MUST follow i
 // Artist
 { "id": "…", "name": "José Madero", "album_count": 3, "track_count": 36 }
 // User
-{ "id": "…", "username": "sajra", "is_admin": true }
+{ "id": "…", "username": "alice", "is_admin": true }
 // Invite — `code` is 12 random chars from [A-Z2-9] (no 0/O/1/I)
 { "code": "K7Q2MX9RTA4P", "created_at": "…", "expires_at": "…", "max_uses": 1, "uses": 0 }
 // Playlist
@@ -64,7 +64,7 @@ Nullable fields: `track_number`, `disc_number`, `year`, `genre`, `bitrate_kbps`,
 | DELETE | `/admin/invites/{code}` | – | 204 (revokes) · 404 |
 | GET | `/tracks` | `q`, `artist_id`, `album_id`, `limit`, `offset` | list of Track (sorted artist, album, disc, track, title). `q` matches title/artist/album, case-insensitive |
 | GET | `/tracks/{id}` | – | Track |
-| GET | `/tracks/{id}/stream` | `format=original\|opus` (default `original`), `bitrate=64\|96\|128\|192` (default 128, opus only) | audio bytes. **Must honor `Range`** (206 + `Content-Range`, `Accept-Ranges: bytes`) for both formats. Opus is transcoded once with ffmpeg into the data cache (`audio/ogg`) |
+| GET | `/tracks/{id}/stream` | `format=original\|opus\|flac` (default `original`), `bitrate=64\|96\|128\|192` (default 128, opus only) | audio bytes. **Must honor `Range`** (206 + `Content-Range`, `Accept-Ranges: bytes`) for every format. Opus (`audio/ogg`) and FLAC (`audio/flac`, lossless: keeps sample rate and bit depth) are transcoded once with ffmpeg into the data cache. Clients request `flac` instead of `original` for Apple Lossless (`format: "m4a"` with `lossless: true`), which Android and browsers cannot decode |
 | GET | `/tracks/{id}/cover` | – | image bytes (embedded art, else `cover.jpg`/`folder.jpg`/`cover.png` in the track folder) · 404 if none |
 | GET | `/tracks/{id}/waveform` | – | `{"peaks":[120 floats in 0..1]}` computed on first request and cached |
 | GET | `/tracks/{id}/lyrics` | – | `{"synced":bool,"lines":[{"time_ms":int\|null,"text":str}]}` from sidecar `<stem>.lrc` or embedded lyrics tag · 404 if none |

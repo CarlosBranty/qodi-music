@@ -16,7 +16,7 @@ use crate::auth::{TokenService, UserRepository, hash_password_async, load_or_cre
 use crate::config::Config;
 use crate::library::TagReader;
 use crate::library::scanner::Scanner;
-use crate::streaming::{OpusCache, WaveformAnalyzer};
+use crate::streaming::{TranscodeCache, WaveformAnalyzer};
 use crate::time::now_ms;
 
 pub struct AppInner {
@@ -26,7 +26,7 @@ pub struct AppInner {
     pub scanner: Arc<Scanner<SqliteStore>>,
     pub tags: Arc<dyn TagReader>,
     pub waveform: Arc<dyn WaveformAnalyzer>,
-    pub opus: OpusCache,
+    pub transcodes: TranscodeCache,
 }
 
 #[derive(Clone)]
@@ -53,8 +53,8 @@ pub struct Background {
 impl App {
     /// Creates data dirs, runs migrations, loads the JWT secret and bootstraps the admin user.
     pub async fn build(config: Config) -> Result<Self> {
-        let opus_dir = config.data_dir.join("cache").join("opus");
-        std::fs::create_dir_all(&opus_dir).with_context(|| format!("create {}", opus_dir.display()))?;
+        let cache_dir = config.data_dir.join("cache");
+        std::fs::create_dir_all(&cache_dir).with_context(|| format!("create {}", cache_dir.display()))?;
         restrict_permissions(&config.data_dir);
 
         let store = SqliteStore::open(&config.data_dir).await?;
@@ -64,7 +64,7 @@ impl App {
 
         let tags: Arc<dyn TagReader> = Arc::new(LoftyTagReader);
         let scanner = Arc::new(Scanner::new(store.clone(), tags.clone(), config.music_dir.clone()));
-        let opus = OpusCache::new(opus_dir, Arc::new(FfmpegTranscoder::new(config.ffmpeg.clone())));
+        let transcodes = TranscodeCache::new(cache_dir, Arc::new(FfmpegTranscoder::new(config.ffmpeg.clone())));
         let state = AppState(Arc::new(AppInner {
             config,
             store,
@@ -72,7 +72,7 @@ impl App {
             scanner,
             tags,
             waveform: Arc::new(SymphoniaWaveform),
-            opus,
+            transcodes,
         }));
         let router = crate::http::router(state.clone());
         Ok(Self { state, router })

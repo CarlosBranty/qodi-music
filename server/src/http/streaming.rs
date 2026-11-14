@@ -15,7 +15,7 @@ use super::error::{ApiError, ApiResult};
 use super::extract::{ApiQuery, AuthUser};
 use crate::app::AppState;
 use crate::library::LibraryCatalog;
-use crate::streaming::{StreamFormat, WAVEFORM_PEAKS, WaveformCache, content_type, normalize_peaks, parse_bitrate};
+use crate::streaming::{StreamFormat, Target, WAVEFORM_PEAKS, WaveformCache, content_type, normalize_peaks, parse_bitrate};
 
 #[derive(Deserialize)]
 pub struct StreamQuery {
@@ -31,7 +31,7 @@ pub async fn stream(
     headers: HeaderMap,
 ) -> ApiResult<Response> {
     let format = StreamFormat::parse(query.format.as_deref())
-        .ok_or_else(|| ApiError::bad_request("format must be original or opus"))?;
+        .ok_or_else(|| ApiError::bad_request("format must be original, opus or flac"))?;
     let bitrate = parse_bitrate(query.bitrate.as_deref())
         .ok_or_else(|| ApiError::bad_request("bitrate must be 64, 96, 128 or 192"))?;
     let file = state.store.track_file(&id).await?.ok_or_else(|| ApiError::not_found("track"))?;
@@ -39,13 +39,13 @@ pub async fn stream(
     if !source.is_file() {
         return Err(ApiError::not_found("track file"));
     }
-    match format {
-        StreamFormat::Original => serve_file(source, content_type(&file.format), &headers).await,
-        StreamFormat::Opus => {
-            let cached = state.opus.get(&file.id, &source, bitrate).await?;
-            serve_file(cached, "audio/ogg", &headers).await
-        }
-    }
+    let target = match format {
+        StreamFormat::Original => return serve_file(source, content_type(&file.format), &headers).await,
+        StreamFormat::Opus => Target::Opus { bitrate_kbps: bitrate },
+        StreamFormat::Flac => Target::Flac,
+    };
+    let cached = state.transcodes.get(&file.id, &source, target).await?;
+    serve_file(cached, target.content_type(), &headers).await
 }
 
 /// Serves a file with `Range`/conditional request support via `ServeFile`.

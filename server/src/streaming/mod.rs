@@ -1,4 +1,4 @@
-//! Streaming: original files, cached opus transcodes and waveform peaks.
+//! Streaming: original files, cached opus/flac transcodes and waveform peaks.
 
 use std::collections::HashMap;
 use std::future::Future;
@@ -15,6 +15,8 @@ pub const DEFAULT_OPUS_BITRATE: u32 = 128;
 pub enum StreamFormat {
     Original,
     Opus,
+    /// Lossless FLAC transcode, for sources clients cannot decode (Apple Lossless in `.m4a`).
+    Flac,
 }
 
 impl StreamFormat {
@@ -22,6 +24,7 @@ impl StreamFormat {
         match value.unwrap_or("original") {
             "original" => Some(Self::Original),
             "opus" => Some(Self::Opus),
+            "flac" => Some(Self::Flac),
             _ => None,
         }
     }
@@ -47,9 +50,33 @@ pub fn content_type(format: &str) -> &'static str {
     }
 }
 
-/// Port: transcodes a file to Ogg/Opus (blocking).
+/// Output of a transcode.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Target {
+    Opus { bitrate_kbps: u32 },
+    Flac,
+}
+
+impl Target {
+    /// Cache path relative to the transcode cache dir.
+    fn cache_path(self, track_id: &str) -> PathBuf {
+        match self {
+            Self::Opus { bitrate_kbps } => PathBuf::from("opus").join(format!("{track_id}-{bitrate_kbps}.ogg")),
+            Self::Flac => PathBuf::from("flac").join(format!("{track_id}.flac")),
+        }
+    }
+
+    pub fn content_type(self) -> &'static str {
+        match self {
+            Self::Opus { .. } => "audio/ogg",
+            Self::Flac => "audio/flac",
+        }
+    }
+}
+
+/// Port: transcodes a file (blocking).
 pub trait Transcoder: Send + Sync + 'static {
-    fn to_opus(&self, input: &Path, output: &Path, bitrate_kbps: u32) -> Result<()>;
+    fn transcode(&self, input: &Path, output: &Path, target: Target) -> Result<()>;
 }
 
 /// Port: decodes a file and returns raw per-chunk peak amplitudes (blocking).
@@ -83,26 +110,26 @@ pub fn normalize_peaks(raw: &[f32], buckets: usize) -> Vec<f32> {
     out
 }
 
-/// Opus transcode cache at `{data}/cache/opus/{id}-{bitrate}.ogg`.
+/// Transcode cache under `{data}/cache`: `opus/{id}-{bitrate}.ogg` and `flac/{id}.flac`.
 ///
-/// Each (track, bitrate) is transcoded once at a time; output is written to a
+/// Each (track, target) is transcoded once at a time; output is written to a
 /// temp file and renamed, so readers never see a partial file.
-pub struct OpusCache {
+pub struct TranscodeCache {
     dir: PathBuf,
     transcoder: Arc<dyn Transcoder>,
     locks: Mutex<HashMap<String, Arc<tokio::sync::Mutex<()>>>>,
 }
 
-impl OpusCache {
+impl TranscodeCache {
     pub fn new(dir: PathBuf, transcoder: Arc<dyn Transcoder>) -> Self {
         Self { dir, transcoder, locks: Mutex::default() }
     }
 
-    pub async fn get(&self, track_id: &str, source: &Path, bitrate_kbps: u32) -> Result<PathBuf> {
-        let key = format!("{track_id}-{bitrate_kbps}");
-        let target = self.dir.join(format!("{key}.ogg"));
+    pub async fn get(&self, track_id: &str, source: &Path, output: Target) -> Result<PathBuf> {
+        let target = self.dir.join(output.cache_path(track_id));
+        let key = target.to_string_lossy().into_owned();
         let lock = {
-            let mut locks = self.locks.lock().expect("opus lock map poisoned");
+            let mut locks = self.locks.lock().expect("transcode lock map poisoned");
             Arc::clone(locks.entry(key.clone()).or_default())
         };
         let _guard = lock.lock().await;
@@ -110,10 +137,13 @@ impl OpusCache {
             return Ok(target);
         }
 
-        let temp = self.dir.join(format!(".{key}.{}.tmp", uuid::Uuid::new_v4().simple()));
+        let dir = target.parent().expect("cache path has a parent");
+        std::fs::create_dir_all(dir).with_context(|| format!("create {}", dir.display()))?;
+        let name = target.file_name().expect("cache path has a file name").to_string_lossy();
+        let temp = dir.join(format!(".{name}.{}.tmp", uuid::Uuid::new_v4().simple()));
         let transcoder = Arc::clone(&self.transcoder);
         let (src, tmp) = (source.to_path_buf(), temp.clone());
-        let result = tokio::task::spawn_blocking(move || transcoder.to_opus(&src, &tmp, bitrate_kbps))
+        let result = tokio::task::spawn_blocking(move || transcoder.transcode(&src, &tmp, output))
             .await
             .context("transcode task panicked")?;
         if let Err(err) = result.and_then(|_| std::fs::rename(&temp, &target).context("rename transcode")) {
@@ -150,6 +180,7 @@ mod tests {
     #[test]
     fn validates_query_values() {
         assert_eq!(StreamFormat::parse(None), Some(StreamFormat::Original));
+        assert_eq!(StreamFormat::parse(Some("flac")), Some(StreamFormat::Flac));
         assert_eq!(StreamFormat::parse(Some("mp3")), None);
         assert_eq!(parse_bitrate(Some("96")), Some(96));
         assert_eq!(parse_bitrate(Some("100")), None);

@@ -202,6 +202,51 @@ async fn stream_opus_transcode() {
 }
 
 #[tokio::test]
+async fn stream_flac_transcode_keeps_alac_lossless() {
+    if !has_ffmpeg() {
+        eprintln!("ffmpeg not found; skipping flac test");
+        return;
+    }
+    let env = setup().await;
+    // Apple Lossless as found in real libraries: Android (ExoPlayer) and browsers cannot decode it.
+    const ALAC: &str = "Gen/apple-lossless.m4a";
+    let source = env.music.join(ALAC);
+    std::fs::create_dir_all(source.parent().unwrap()).unwrap();
+    let status = std::process::Command::new("ffmpeg")
+        .args(["-y", "-loglevel", "error", "-f", "lavfi", "-i", "sine=frequency=440:duration=1"])
+        .args(["-ac", "2", "-ar", "96000", "-c:a", "alac", "-sample_fmt", "s32p"])
+        .arg(&source)
+        .status()
+        .unwrap();
+    assert!(status.success());
+    env.app.state.scanner.scan_now().await.unwrap();
+
+    let id = short_hash(ALAC);
+    let uri = format!("/api/v1/tracks/{id}/stream?format=flac");
+    let (status, headers, body) = call(&env.app.router, "GET", &uri, Some(&env.token), None, &[]).await;
+    assert_eq!(status, StatusCode::OK, "{}", String::from_utf8_lossy(&body));
+    assert_eq!(headers["content-type"], "audio/flac");
+    assert_eq!(headers["accept-ranges"], "bytes");
+    assert_eq!(&body[..4], b"fLaC");
+    let cached = env.app.state.config.data_dir.join(format!("cache/flac/{id}.flac"));
+    assert_eq!(std::fs::metadata(&cached).unwrap().len() as usize, body.len());
+
+    // Lossless: sample rate and bit depth survive the transcode.
+    let probe = std::process::Command::new("ffprobe")
+        .args(["-v", "error", "-select_streams", "a:0", "-show_entries", "stream=codec_name,sample_rate,bits_per_raw_sample"])
+        .args(["-of", "csv=p=0"])
+        .arg(&cached)
+        .output()
+        .unwrap();
+    assert_eq!(String::from_utf8_lossy(&probe.stdout).trim(), "flac,96000,24");
+
+    let (status, headers, part) = call(&env.app.router, "GET", &uri, Some(&env.token), None, &[("range", "bytes=0-9")]).await;
+    assert_eq!(status, StatusCode::PARTIAL_CONTENT);
+    assert_eq!(headers["content-range"], format!("bytes 0-9/{}", body.len()).as_str());
+    assert_eq!(part, body[..10]);
+}
+
+#[tokio::test]
 async fn cover_lyrics_and_waveform() {
     let env = setup().await;
     let alpha = short_hash(ALPHA);

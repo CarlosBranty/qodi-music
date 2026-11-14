@@ -9,6 +9,7 @@ Branch: `feat/qodi-music-v1` · Delivery: ask-on-risk · Runners: `cargo test` (
 - S3 Client in Flutter, multiplatform ("me gustaria que se pueda usar en multiplataforma"): Android, Linux, web (iOS/Windows/macOS scaffolded). Background playback + media controls; offline downloads on native.
 - S4 UI "que tenga este interfaz el cliente": style of the two reference images — beige `#EFE6DD`, orange `#E8653F`, navy `#0F2233`, black pill nav bar, vinyl covers, bento stat cards, arc waveform seekbar with big orange play button, lyrics sheet, dark mode.
 - S5 Deploy: one Compose stack (server + web client) for Dokploy behind the existing Cloudflare tunnel; music volume read-only; songs arrive via Syncthing into the music dir.
+- S6 "ahora tambien funciona como reproductor de musica offline? paraque tome musica del propio telefono" + "Si hazlo": play music stored on the device itself. Decision (assistant default, user delegated): separate "On this device" section in Library; app usable without a server ("Use without server" on login); device tracks get local favorites/playlists; reuse the existing player. Android + Linux/Windows/macOS via folder scan; iOS limited to files imported into the app.
 
 ## Tasks
 
@@ -17,6 +18,7 @@ Branch: `feat/qodi-music-v1` · Delivery: ask-on-risk · Runners: `cargo test` (
 | T1 | S2 | delegated (writer trigger a: parallel with T2, disjoint `server/**`) | done — cargo test 19/19, clippy clean | 1f7bdf4 |
 | T2 | S3, S4 | delegated (writer trigger a: parallel with T1, disjoint `app/**`) | done — analyze clean, 36 tests, linux+web builds | beae5bd |
 | T3 | S1, S5 | inline (Dockerfile, compose, README) | done — docker build NOT run (no Docker locally) | e605f83, eeb94f9 |
+| T5 | S6 | delegated (context backstop: unfamiliar 12k-line app/; reading prepares the write) | in progress | |
 | T4 | S2 | independent verifier — Risk item 2 (auth/token handling) | done — 0 blockers, 6 advisories (2 fixed) | see HEAD |
 
 ## Log
@@ -25,3 +27,4 @@ Branch: `feat/qodi-music-v1` · Delivery: ask-on-risk · Runners: `cargo test` (
 - L2 Environment: Rust 1.99 + ffmpeg present; Flutter installed to `~/develop/flutter`; Docker absent locally, so the compose build cannot be run here.
 - L3 T4 verdict: no blockers. Fixed advisories: per-user play dedupe, data dir 0700. Open advisories: JWT secret min length, login rate limit (use Cloudflare rule), `?token=` in proxy logs, no token revocation.
 - L4 Seam check: server serves the web build at `/` with SPA fallback; plays/playlists payloads from the app accepted. Pending: `docker compose build`, Android APK, real-device background playback test.
+- L5 (2026-11-13) "ok ahora tambien funciona como reproductor de musica offline? paraque tome musica del propio telefono" → verified: not supported (no storage permission, no device source, login required). User: "Si hazlo" (did not pick mixed vs separate; assistant chose separate section).

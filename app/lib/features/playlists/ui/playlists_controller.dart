@@ -3,17 +3,24 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/config/core_providers.dart';
 import '../../auth/ui/auth_controller.dart';
 import '../../library/domain/entities.dart';
+import '../data/cached_playlist_repository.dart';
 import '../data/playlists_api.dart';
 import '../domain/playlist.dart';
 
-final playlistRepositoryProvider =
-    Provider<PlaylistRepository>((ref) => PlaylistsApi(ref.watch(apiClientProvider)));
+final playlistRepositoryProvider = Provider<PlaylistRepository>((ref) {
+  final settings = ref.watch(settingsStoreProvider);
+  return CachedPlaylistRepository(
+    PlaylistsApi(ref.watch(apiClientProvider)),
+    settings.prefs,
+    userId: () => settings.session?.user.id,
+  );
+});
 
 final playlistDetailProvider = FutureProvider.autoDispose.family<PlaylistDetail, String>(
-    (ref, id) => ref.watch(playlistRepositoryProvider).get(id));
+  (ref, id) => ref.watch(playlistRepositoryProvider).get(id),
+);
 
-final playlistsControllerProvider =
-    AsyncNotifierProvider<PlaylistsController, List<Playlist>>(PlaylistsController.new);
+final playlistsControllerProvider = AsyncNotifierProvider<PlaylistsController, List<Playlist>>(PlaylistsController.new);
 
 class PlaylistsController extends AsyncNotifier<List<Playlist>> {
   PlaylistRepository get _repo => ref.read(playlistRepositoryProvider);

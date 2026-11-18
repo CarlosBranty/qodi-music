@@ -13,6 +13,16 @@ Playlist playlistFromJson(Json j) => Playlist(
       updatedAt: asString(j['updated_at']),
     );
 
+Json playlistToJson(Playlist p) => {
+      'id': p.id,
+      'name': p.name,
+      'track_count': p.trackCount,
+      'duration_ms': p.durationMs,
+      'cover_track_id': p.coverTrackId,
+      'created_at': p.createdAt,
+      'updated_at': p.updatedAt,
+    };
+
 class PlaylistsApi implements PlaylistRepository {
   PlaylistsApi(this._api);
   final ApiClient _api;

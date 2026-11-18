@@ -1,6 +1,7 @@
 import '../../../core/api/api_client.dart';
 import '../../../core/api/json.dart';
 import '../../library/data/library_mappers.dart';
+import '../../library/domain/entities.dart';
 import '../domain/playlist.dart';
 
 Playlist playlistFromJson(Json j) => Playlist(
@@ -49,8 +50,8 @@ class PlaylistsApi implements PlaylistRepository {
       playlistFromJson(asJson(await _api.patch('/playlists/$id', body: {'name': name})));
 
   @override
-  Future<Playlist> setTracks(String id, List<String> trackIds) async =>
-      playlistFromJson(asJson(await _api.patch('/playlists/$id', body: {'track_ids': trackIds})));
+  Future<Playlist> setTracks(String id, List<Track> tracks) async => playlistFromJson(
+      asJson(await _api.patch('/playlists/$id', body: {'track_ids': tracks.map((t) => t.id).toList()})));
 
   @override
   Future<void> delete(String id) => _api.delete('/playlists/$id');

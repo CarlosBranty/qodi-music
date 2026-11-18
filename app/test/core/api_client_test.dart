@@ -171,7 +171,7 @@ void main() {
       expect(list.single.name, 'Night drive');
       expect(list.single.trackCount, 20);
       expect(list.single.coverTrackId, isNull);
-      await repo.setTracks('p1', ['t2', 't1']);
+      await repo.setTracks('p1', [track('t2'), track('t1')]);
       expect(http.bodies.last, {'track_ids': ['t2', 't1']});
     });
 

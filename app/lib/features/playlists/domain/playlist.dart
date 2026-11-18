@@ -32,6 +32,7 @@ abstract interface class PlaylistRepository {
   Future<Playlist> create(String name);
   Future<PlaylistDetail> get(String id);
   Future<Playlist> rename(String id, String name);
-  Future<Playlist> setTracks(String id, List<String> trackIds);
+  /// Replaces the ordered track list.
+  Future<Playlist> setTracks(String id, List<Track> tracks);
   Future<void> delete(String id);
 }

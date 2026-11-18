@@ -11,6 +11,7 @@ import 'features/update/ui/update_controller.dart';
 import 'features/update/ui/update_dialogs.dart';
 import 'features/equalizer/ui/equalizer_controller.dart';
 import 'features/library/ui/library_providers.dart';
+import 'features/playlists/ui/playlists_controller.dart';
 import 'features/stats/ui/stats_providers.dart';
 import 'core/config/core_providers.dart';
 import 'features/settings/ui/settings_controllers.dart';
@@ -56,6 +57,7 @@ class _QodiAppState extends ConsumerState<QodiApp> {
     // Refreshes `is_admin` (sessions saved by older versions lack it).
     ref.read(authControllerProvider.notifier).refreshUser(ref.read(accountApiProvider).me);
     await ref.read(playsReporterProvider).flush();
+    await ref.read(playlistsControllerProvider.notifier).sync();
     if (ref.read(platformServicesProvider).supportsOffline) {
       try {
         await ref.read(librarySyncProvider).sync();

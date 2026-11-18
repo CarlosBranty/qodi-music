@@ -10,6 +10,7 @@ import 'package:qodi_music/features/playlists/ui/playlists_controller.dart';
 
 import '../support/fake_device.dart';
 import '../support/fakes.dart';
+import 'package:qodi_music/features/library/domain/entities.dart';
 import '../support/fixtures.dart';
 
 const session = {'server_url': 'http://nas:4040', 'token': 'tok', 'username': 'alice', 'user_id': 'u1'};
@@ -31,7 +32,7 @@ class CountingPlaylists implements PlaylistRepository {
   @override
   Future<Playlist> rename(String id, String name) => throw UnimplementedError();
   @override
-  Future<Playlist> setTracks(String id, List<String> trackIds) => throw UnimplementedError();
+  Future<Playlist> setTracks(String id, List<Track> tracks) => throw UnimplementedError();
 }
 
 void main() {

@@ -32,6 +32,16 @@ class PlaylistsController extends AsyncNotifier<List<Playlist>> {
     return _repo.list();
   }
 
+  /// Sends offline edits and refreshes the saved copy (app start / resume).
+  Future<void> sync() async {
+    if (ref.read(authControllerProvider) == null) return;
+    try {
+      await _reload();
+    } catch (_) {
+      // Server unavailable: keep showing what we have.
+    }
+  }
+
   Future<void> _reload() async {
     state = AsyncData(await _repo.list());
   }
@@ -55,14 +65,14 @@ class PlaylistsController extends AsyncNotifier<List<Playlist>> {
 
   Future<void> addTracks(String id, List<Track> tracks) async {
     final detail = await _repo.get(id);
-    await _repo.setTracks(id, [...detail.tracks.map((t) => t.id), ...tracks.map((t) => t.id)]);
+    await _repo.setTracks(id, [...detail.tracks, ...tracks]);
     ref.invalidate(playlistDetailProvider(id));
     await _reload();
   }
 
   /// Replaces the ordered track list (reorder / remove).
   Future<void> setTracks(String id, List<Track> tracks) async {
-    await _repo.setTracks(id, tracks.map((t) => t.id).toList());
+    await _repo.setTracks(id, tracks);
     ref.invalidate(playlistDetailProvider(id));
     await _reload();
   }

@@ -44,6 +44,7 @@ Future<void> showQueueSheet(BuildContext context) => showModalBottomSheet<void>(
                   itemBuilder: (_, i) => TrackTile(
                     track: queue[i],
                     highlighted: i == snap?.queuePosition,
+                    playing: i == snap?.queuePosition && (snap?.playing ?? false),
                     onTap: () => port.jumpTo(i),
                     trailing: OfflineTrackBadge(queue[i].id),
                   ),

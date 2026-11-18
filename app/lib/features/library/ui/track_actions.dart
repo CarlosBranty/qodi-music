@@ -178,11 +178,13 @@ class ConnectedTrackTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final fav = watchIsFavorite(ref, track);
     final current = ref.watch(playerSnapshotProvider.select((s) => s.value?.current?.id));
+    final playing = current == track.id && ref.watch(playerSnapshotProvider.select((s) => s.value?.playing ?? false));
     final downloading = ref.watch(downloadsControllerProvider.select((s) => s.isDownloading(track.id)));
     final offline = ref.watch(trackAvailableOfflineProvider(track.id));
     return TrackTile(
       track: track,
       highlighted: current == track.id,
+      playing: playing,
       favorite: fav,
       leading: leading,
       trailing:

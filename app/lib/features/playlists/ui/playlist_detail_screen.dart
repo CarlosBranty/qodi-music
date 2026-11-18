@@ -39,8 +39,12 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
   }
 
   Future<void> _rename(String current) async {
-    final name = await askPlaylistName(context,
-        title: context.l10n.renamePlaylist, initial: current, action: context.l10n.save);
+    final name = await askPlaylistName(
+      context,
+      title: context.l10n.renamePlaylist,
+      initial: current,
+      action: context.l10n.save,
+    );
     if (name == null) return;
     try {
       await _controller.rename(widget.playlistId, name);
@@ -74,6 +78,8 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final detail = ref.watch(playlistDetailProvider(widget.playlistId));
+    final currentId = ref.watch(playerSnapshotProvider.select((s) => s.value?.current?.id));
+    final isPlaying = ref.watch(playerSnapshotProvider.select((s) => s.value?.playing ?? false));
     final l = context.l10n;
     final name = detail.value?.playlist.name ?? l.playlist;
     return Scaffold(
@@ -128,6 +134,8 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                     color: Colors.transparent,
                     child: TrackTile(
                       track: t,
+                      highlighted: t.id == currentId,
+                      playing: t.id == currentId && isPlaying,
                       onTap: () => ref.read(playerPortProvider).playTracks(tracks, startIndex: i),
                       onLongPress: () => showTrackActions(context, ref, t),
                       trailing: Row(

@@ -8,6 +8,7 @@ import 'package:qodi_music/features/library/domain/entities.dart';
 import 'package:qodi_music/features/library/ui/album_detail_screen.dart';
 import 'package:qodi_music/features/library/ui/track_actions.dart';
 import 'package:qodi_music/features/player/ui/mini_player.dart';
+import 'package:qodi_music/shared/widgets/now_playing_indicator.dart';
 
 import '../support/fakes.dart';
 import '../support/fixtures.dart';
@@ -56,6 +57,15 @@ void main() {
     expect(badgeIn('Downloaded song'), findsOneWidget);
     expect(badgeIn('Device song'), findsOneWidget);
     expect(badgeIn('Remote song'), findsNothing);
+  });
+
+  testWidgets('track rows: only the playing track shows the now-playing indicator', (tester) async {
+    await pump(tester, rows([downloadedServer, remote, device]));
+    Finder indicatorIn(String title) => find.descendant(
+        of: find.widgetWithText(ConnectedTrackTile, title), matching: find.byType(NowPlayingIndicator));
+    expect(indicatorIn('Remote song'), findsOneWidget);
+    expect(indicatorIn('Downloaded song'), findsNothing);
+    expect(indicatorIn('Device song'), findsNothing);
   });
 
   testWidgets('track rows: a download in progress still shows a spinner (previous behavior)', (tester) async {
